@@ -1,5 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { mockBudgets } from "@/lib/budget-data";
+import { useBudgets } from "@/contexts/BudgetContext";
 import type { Priority } from "@/lib/budget-data";
 
 const PRIORITY_COLORS: Record<Priority, string> = {
@@ -9,8 +9,10 @@ const PRIORITY_COLORS: Record<Priority, string> = {
 };
 
 const PriorityDonut = () => {
+  const { budgets } = useBudgets();
+
   const counts: Record<Priority, number> = { Alta: 0, Media: 0, Baja: 0 };
-  mockBudgets.forEach((b) => {
+  budgets.forEach((b) => {
     counts[b.prioridad]++;
   });
 
