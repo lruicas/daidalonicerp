@@ -6,6 +6,7 @@ import BudgetTable from "@/components/presupuestos/BudgetTable";
 import { useState } from "react";
 import { Section, Priority } from "@/lib/budget-data";
 import { useBudgets } from "@/contexts/BudgetContext";
+import { useRole } from "@/contexts/RoleContext";
 
 const Presupuestos = () => {
   const { canEditPresupuestos } = useRole();
