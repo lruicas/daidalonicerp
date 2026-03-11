@@ -43,13 +43,6 @@ const Admin = () => {
   const [editRole, setEditRole] = useState<AccessUser["rol"]>("Miembro");
 
   if (role !== "Presidente") return <Navigate to="/" replace />;
-  const [backups, setBackups] = useState<BackupEntry[]>(mockBackups);
-  const [retentionWeeks, setRetentionWeeks] = useState(4);
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<AccessUser["rol"]>("Miembro");
-  const [editingUser, setEditingUser] = useState<AccessUser | null>(null);
-  const [editRole, setEditRole] = useState<AccessUser["rol"]>("Miembro");
 
   const toggleActive = (id: string) => {
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, activo: !u.activo } : u)));

@@ -69,6 +69,18 @@ const NavBar = () => {
             </div>
           )}
         </div>
+
+        {role === "Presidente" && (
+          <Link
+            to="/admin"
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-primary-foreground transition-opacity ${
+              pathname === "/admin" ? "opacity-100 bg-primary-foreground/10" : "opacity-70 hover:opacity-100"
+            }`}
+          >
+            <Settings className="h-4 w-4" strokeWidth={1.5} />
+            Administración
+          </Link>
+        )}
       </div>
     </nav>
   );
