@@ -26,6 +26,7 @@ const App = () => (
     <RoleProvider>
     <BudgetProvider>
     <InventoryProvider>
+    <MembersProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
