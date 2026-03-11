@@ -63,7 +63,7 @@ const NavBar = () => {
           <DropdownMenuContent
             align="start"
             sideOffset={8}
-            className="z-[300] min-w-[260px] rounded-lg border border-border bg-card py-1 shadow-lg"
+            className="z-50 min-w-[260px] rounded-lg border border-border bg-card py-1 shadow-lg"
           >
             {directoryLinks.map(({ label, icon: Icon, to }) => (
               <DropdownMenuItem key={label} asChild className="p-0 focus:bg-muted/50">
