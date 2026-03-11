@@ -8,6 +8,7 @@ import { Section, Priority } from "@/lib/budget-data";
 import { useBudgets } from "@/contexts/BudgetContext";
 
 const Presupuestos = () => {
+  const { canEditPresupuestos } = useRole();
   const { budgets, updateRow, importRows } = useBudgets();
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState<Section | "all">("all");
