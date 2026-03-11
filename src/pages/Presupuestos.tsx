@@ -34,7 +34,7 @@ const Presupuestos = () => {
           <h2 className="text-xl font-semibold text-foreground">Presupuestos</h2>
         </div>
 
-        <BudgetToolbar budgets={budgets} onImport={importRows} />
+        <BudgetToolbar budgets={budgets} onImport={canEditPresupuestos ? importRows : undefined} />
         <BudgetFilters
           search={search}
           onSearchChange={setSearch}
