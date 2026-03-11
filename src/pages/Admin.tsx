@@ -33,9 +33,16 @@ import {
 
 const Admin = () => {
   const { role } = useRole();
-  if (role !== "Presidente") return <Navigate to="/" replace />;
-
   const [users, setUsers] = useState<AccessUser[]>(mockAccessUsers);
+  const [backups, setBackups] = useState<BackupEntry[]>(mockBackups);
+  const [retentionWeeks, setRetentionWeeks] = useState(4);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<AccessUser["rol"]>("Miembro");
+  const [editingUser, setEditingUser] = useState<AccessUser | null>(null);
+  const [editRole, setEditRole] = useState<AccessUser["rol"]>("Miembro");
+
+  if (role !== "Presidente") return <Navigate to="/" replace />;
   const [backups, setBackups] = useState<BackupEntry[]>(mockBackups);
   const [retentionWeeks, setRetentionWeeks] = useState(4);
   const [inviteOpen, setInviteOpen] = useState(false);
