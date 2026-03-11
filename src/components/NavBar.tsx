@@ -5,6 +5,12 @@ import {
   Users, ChevronDown, Building2, Handshake, UserCheck, Settings,
 } from "lucide-react";
 import { useRole } from "@/contexts/RoleContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const mainLinks = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/" },
@@ -26,7 +32,7 @@ const NavBar = () => {
   const { isAdmin } = useRole();
 
   return (
-    <nav className="relative" style={{ backgroundColor: "hsl(168, 45%, 42%)" }}>
+    <nav className="relative z-[120] isolate overflow-visible" style={{ backgroundColor: "hsl(168, 45%, 42%)" }}>
       <div className="flex items-center gap-1 px-4 sm:px-8 py-2 sm:py-3 overflow-x-auto scrollbar-hide">
         {mainLinks.map(({ label, icon: Icon, to }) => (
           <Link
@@ -41,23 +47,27 @@ const NavBar = () => {
           </Link>
         ))}
 
-        <div className="relative shrink-0">
-          <button
-            onClick={() => setDirOpen(!dirOpen)}
-            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium text-primary-foreground transition-opacity whitespace-nowrap ${
-              dirOpen ? "opacity-100 bg-primary-foreground/10" : "opacity-70 hover:opacity-100"
-            }`}
-          >
-            <Users className="h-4 w-4" strokeWidth={1.5} />
-            <span className="hidden sm:inline">Directorios</span>
-            <ChevronDown className={`h-3 w-3 transition-transform ${dirOpen ? "rotate-180" : ""}`} strokeWidth={1.5} />
-          </button>
+        <DropdownMenu open={dirOpen} onOpenChange={setDirOpen}>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium text-primary-foreground transition-opacity whitespace-nowrap shrink-0 ${
+                dirOpen ? "opacity-100 bg-primary-foreground/10" : "opacity-70 hover:opacity-100"
+              }`}
+            >
+              <Users className="h-4 w-4" strokeWidth={1.5} />
+              <span className="hidden sm:inline">Directorios</span>
+              <ChevronDown className={`h-3 w-3 transition-transform ${dirOpen ? "rotate-180" : ""}`} strokeWidth={1.5} />
+            </button>
+          </DropdownMenuTrigger>
 
-          {dirOpen && (
-            <div className="absolute top-full left-0 mt-1 min-w-[260px] rounded-lg bg-card shadow-lg border border-border z-[200] py-1">
-              {directoryLinks.map(({ label, icon: Icon, to }) => (
+          <DropdownMenuContent
+            align="start"
+            sideOffset={8}
+            className="z-[300] min-w-[260px] rounded-lg border border-border bg-card py-1 shadow-lg"
+          >
+            {directoryLinks.map(({ label, icon: Icon, to }) => (
+              <DropdownMenuItem key={label} asChild className="p-0 focus:bg-muted/50">
                 <Link
-                  key={label}
                   to={to}
                   onClick={() => setDirOpen(false)}
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-foreground transition-opacity hover:opacity-70"
@@ -65,10 +75,10 @@ const NavBar = () => {
                   <Icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
                   {label}
                 </Link>
-              ))}
-            </div>
-          )}
-        </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {isAdmin && (
           <Link
