@@ -641,6 +641,7 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
         onUpdate={updated => { onUpdate(updated); setDetailItem(updated); }}
         onMoveRequest={() => toast.info("Arrastra el objeto a la nueva zona en el mapa")}
       />
+      <AIAssistantPanel open={aiPanelOpen} onClose={() => setAiPanelOpen(false)} />
     </div>
   );
 };
