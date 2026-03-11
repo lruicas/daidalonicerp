@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useRole } from "@/contexts/RoleContext";
+import { useMembers } from "@/contexts/MembersContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,14 +27,25 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import {
-  mockAccessUsers, mockActivity, mockModuleUsage, mockVersions, mockBackups,
+  mockActivity, mockModuleUsage, mockVersions, mockBackups,
   ADMIN_ROLES,
   type AccessUser, type BackupEntry,
 } from "@/lib/admin-data";
 
 const Admin = () => {
   const { role } = useRole();
-  const [users, setUsers] = useState<AccessUser[]>(mockAccessUsers);
+  const { members, setMembers, updateMember, deactivateMember, removeMember } = useMembers();
+
+  // Build access users from shared members context
+  const users: AccessUser[] = members.map((m) => ({
+    id: m.id,
+    nombre: `${m.nombre} ${m.apellidos}`,
+    correoUpv: m.correoUpv,
+    rol: m.estatus === "Coordinador de sección" || m.estatus === "Coordinador de proyecto" || m.estatus === "Miembro" || m.estatus === "Presidente"
+      ? m.estatus as AccessUser["rol"]
+      : "Miembro" as AccessUser["rol"],
+    activo: !m.fechaSalida,
+  }));
   const [backups, setBackups] = useState<BackupEntry[]>(mockBackups);
   const [retentionWeeks, setRetentionWeeks] = useState(4);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -45,25 +57,34 @@ const Admin = () => {
   if (role !== "Presidente") return <Navigate to="/" replace />;
 
   const toggleActive = (id: string) => {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, activo: !u.activo } : u)));
+    const user = users.find((u) => u.id === id);
+    if (!user) return;
+    if (user.activo) {
+      deactivateMember(id);
+    } else {
+      // Reactivate: clear fechaSalida
+      const member = members.find((m) => m.id === id);
+      if (member) updateMember({ ...member, fechaSalida: "" });
+    }
     toast.success("Estado actualizado");
   };
 
   const removeUser = (id: string) => {
-    setUsers((prev) => prev.filter((u) => u.id !== id));
+    removeMember(id);
     toast.success("Acceso eliminado");
   };
 
   const handleInvite = () => {
     if (!inviteEmail) return;
-    const newUser: AccessUser = {
-      id: `MBR-${String(users.length + 1).padStart(3, "0")}`,
-      nombre: inviteEmail.split("@")[0],
-      correoUpv: inviteEmail,
-      rol: inviteRole,
-      activo: true,
+    const newId = `MBR-${String(members.length + 1).padStart(3, "0")}`;
+    const newMember = {
+      id: newId, nombre: inviteEmail.split("@")[0], apellidos: "", seccion: "E-Software" as const,
+      estatus: inviteRole as any, titulacion: "", centro: "", anioUniversitario: 1,
+      telefono: "", correoUpv: inviteEmail, correoPersonal: "",
+      cumpleanos: "", tipoId: "DNI/NIF" as const, numeroId: "",
+      fechaEntrada: new Date().toISOString().slice(0, 10), fechaSalida: "",
     };
-    setUsers((prev) => [...prev, newUser]);
+    setMembers((prev) => [...prev, newMember]);
     setInviteEmail("");
     setInviteOpen(false);
     toast.success("Invitación enviada");
@@ -71,7 +92,10 @@ const Admin = () => {
 
   const handleEditRole = () => {
     if (!editingUser) return;
-    setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? { ...u, rol: editRole } : u)));
+    const member = members.find((m) => m.id === editingUser.id);
+    if (member) {
+      updateMember({ ...member, estatus: editRole as any });
+    }
     setEditingUser(null);
     toast.success("Rol actualizado");
   };
