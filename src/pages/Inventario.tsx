@@ -1,17 +1,17 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import InventoryFilters from "@/components/inventario/InventoryFilters";
 import InventoryTable from "@/components/inventario/InventoryTable";
+import InventoryMap from "@/components/inventario/InventoryMap";
 import ExcelToolbar from "@/components/ExcelToolbar";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, List, Map } from "lucide-react";
 import { useRole } from "@/contexts/RoleContext";
 import { useInventory } from "@/contexts/InventoryContext";
 import type { InventoryItem, InventoryStatus } from "@/lib/inventory-data";
 import type { Section } from "@/lib/budget-data";
 import { exportToExcel, importFromExcel } from "@/lib/excel-utils";
-import { useState } from "react";
 
 const INV_COLUMNS: { key: keyof InventoryItem; header: string }[] = [
   { key: "id", header: "ID" },
@@ -29,6 +29,7 @@ const INV_COLUMNS: { key: keyof InventoryItem; header: string }[] = [
 const Inventario = () => {
   const { canEdit } = useRole();
   const { items, setItems } = useInventory();
+  const [view, setView] = useState<"table" | "map">("table");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<InventoryStatus | "all">("all");
   const [sectionFilter, setSectionFilter] = useState<Section | "all">("all");
@@ -84,14 +85,41 @@ const Inventario = () => {
           </div>
           <div className="flex items-center gap-3">
             <ExcelToolbar onExport={handleExport} onImport={handleImport} disabled={!canEdit} />
+            {/* View toggle */}
+            <div className="flex items-center rounded-md border bg-muted/30 p-0.5">
+              <button
+                onClick={() => setView("table")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  view === "table" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <List className="h-3.5 w-3.5" />
+                Lista
+              </button>
+              <button
+                onClick={() => setView("map")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  view === "map" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Map className="h-3.5 w-3.5" />
+                Mapa
+              </button>
+            </div>
             {canEdit && (
               <Button onClick={handleAdd} className="gap-2"><Plus className="h-4 w-4" />Nuevo elemento</Button>
             )}
           </div>
         </div>
 
-        <InventoryFilters search={search} onSearchChange={setSearch} statusFilter={statusFilter} onStatusChange={setStatusFilter} sectionFilter={sectionFilter} onSectionChange={setSectionFilter} />
-        <InventoryTable items={filtered} onUpdate={handleUpdate} highlightId={highlightId} />
+        {view === "table" ? (
+          <>
+            <InventoryFilters search={search} onSearchChange={setSearch} statusFilter={statusFilter} onStatusChange={setStatusFilter} sectionFilter={sectionFilter} onSectionChange={setSectionFilter} />
+            <InventoryTable items={filtered} onUpdate={handleUpdate} highlightId={highlightId} />
+          </>
+        ) : (
+          <InventoryMap items={filtered} onUpdate={handleUpdate} />
+        )}
       </div>
     </AppLayout>
   );
