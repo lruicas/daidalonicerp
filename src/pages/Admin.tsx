@@ -56,6 +56,7 @@ const Admin = () => {
 
   if (role !== "Presidente") return <Navigate to="/" replace />;
 
+
   const toggleActive = (id: string) => {
     const user = users.find((u) => u.id === id);
     if (!user) return;

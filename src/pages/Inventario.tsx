@@ -27,7 +27,7 @@ const INV_COLUMNS: { key: keyof InventoryItem; header: string }[] = [
 ];
 
 const Inventario = () => {
-  const { canEdit } = useRole();
+  const { canEditInventario: canEdit } = useRole();
   const { items, setItems } = useInventory();
   const [view, setView] = useState<"table" | "map">("table");
   const [search, setSearch] = useState("");

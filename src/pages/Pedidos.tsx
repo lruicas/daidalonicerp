@@ -26,7 +26,7 @@ const ORDER_COLUMNS: { key: keyof Order; header: string }[] = [
 ];
 
 const Pedidos = () => {
-  const { canEdit } = useRole();
+  const { canEditPedidos: canEdit } = useRole();
   const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [view, setView] = useState<"table" | "timeline">("table");
   const [search, setSearch] = useState("");

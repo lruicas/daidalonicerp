@@ -43,7 +43,7 @@ const Presupuestos = () => {
           filterPriority={filterPriority}
           onPriorityChange={setFilterPriority}
         />
-        <BudgetTable rows={filtered} onUpdateRow={updateRow} />
+        <BudgetTable rows={filtered} onUpdateRow={canEditPresupuestos ? updateRow : undefined} />
       </div>
     </AppLayout>
   );

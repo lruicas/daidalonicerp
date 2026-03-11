@@ -1,9 +1,12 @@
-import { User, ShieldCheck, Eye } from "lucide-react";
-import { useRole } from "@/contexts/RoleContext";
+import { User, ShieldCheck, Eye, ChevronDown } from "lucide-react";
+import { useRole, ALL_ROLES, type Role } from "@/contexts/RoleContext";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
-  const { role, toggleRole, canEdit } = useRole();
+  const { role, setRole, canEdit } = useRole();
 
   return (
     <header
@@ -29,13 +32,26 @@ const Header = () => {
           )}
         </Badge>
 
-        <button
-          onClick={toggleRole}
-          className="flex items-center gap-2 rounded-full bg-card/20 backdrop-blur-sm border border-primary-foreground/30 px-5 py-2 text-sm font-medium text-primary-foreground transition-all duration-200 hover:bg-card/30 active:scale-95"
-        >
-          <User className="h-4 w-4" strokeWidth={1.5} />
-          Cambiar vista: {role}
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-2 rounded-full bg-card/20 backdrop-blur-sm border border-primary-foreground/30 px-5 py-2 text-sm font-medium text-primary-foreground transition-all duration-200 hover:bg-card/30 active:scale-95">
+              <User className="h-4 w-4" strokeWidth={1.5} />
+              {role}
+              <ChevronDown className="h-3 w-3" strokeWidth={1.5} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[220px]">
+            {ALL_ROLES.map((r) => (
+              <DropdownMenuItem
+                key={r}
+                onClick={() => setRole(r)}
+                className={r === role ? "bg-accent font-semibold" : ""}
+              >
+                {r}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
