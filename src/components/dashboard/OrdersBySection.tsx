@@ -31,13 +31,16 @@ const OrdersBySection = () => {
       <h3 className="text-sm font-semibold text-foreground mb-4">Pedidos agrupados por sección</h3>
       <div className="h-[260px]">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} barCategoryGap="20%">
+          <BarChart data={data} barCategoryGap="20%" margin={{ bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 90%)" vertical={false} />
             <XAxis
               dataKey="section"
-              tick={{ fontSize: 11, fill: "hsl(0, 0%, 45%)" }}
+              tick={{ fontSize: 10, fill: "hsl(0, 0%, 45%)" }}
               axisLine={false}
               tickLine={false}
+              interval={0}
+              angle={-25}
+              textAnchor="end"
             />
             <YAxis
               tick={{ fontSize: 11, fill: "hsl(0, 0%, 45%)" }}
