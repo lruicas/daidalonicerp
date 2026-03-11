@@ -36,9 +36,10 @@ const statusStyles: Record<InventoryStatus, string> = {
 interface InventoryTableProps {
   items: InventoryItem[];
   onUpdate: (updated: InventoryItem) => void;
+  highlightId?: string | null;
 }
 
-const InventoryTable = ({ items, onUpdate }: InventoryTableProps) => {
+const InventoryTable = ({ items, onUpdate, highlightId }: InventoryTableProps) => {
   const { canEdit } = useRole();
   const [editingId, setEditingId] = useState<string | null>(null);
 
