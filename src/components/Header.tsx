@@ -1,4 +1,4 @@
-import { User, ShieldCheck, Eye, ChevronDown } from "lucide-react";
+import { User, ShieldCheck, Eye, ChevronDown, LogIn } from "lucide-react";
 import { useRole, ALL_ROLES, type Role } from "@/contexts/RoleContext";
 import { Badge } from "@/components/ui/badge";
 import {

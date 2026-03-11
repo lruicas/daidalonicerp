@@ -199,7 +199,11 @@ const EventosEconomicos = () => {
         {view === "table" ? (
           <>
             <EventFilters search={search} onSearchChange={setSearch} filterStatus={filterStatus} onStatusChange={setFilterStatus} />
-            <EventTable rows={filtered} onUpdateRow={updateRow} />
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="min-w-[700px] px-4 sm:px-0">
+                <EventTable rows={filtered} onUpdateRow={updateRow} />
+              </div>
+            </div>
           </>
         ) : (
           <EventCalendarView events={filtered} />
