@@ -28,6 +28,7 @@ const ORDER_COLUMNS: { key: keyof Order; header: string }[] = [
 const Pedidos = () => {
   const { canEdit } = useRole();
   const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [view, setView] = useState<"table" | "timeline">("table");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
   const [typeFilter, setTypeFilter] = useState<PurchaseType | "all">("all");
