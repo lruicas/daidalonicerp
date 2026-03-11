@@ -69,7 +69,7 @@ const BudgetToolbar = ({ budgets, onImport }: Props) => {
         eventoEconomico: String(row["Evento económico"] ?? "").split(",").map((s) => s.trim()).filter(Boolean),
         fecha: String(row["Fecha"] ?? ""),
       }));
-      onImport(rows);
+      onImport?.(rows);
       toast.success(`${rows.length} filas importadas`);
     };
     reader.readAsArrayBuffer(file);
