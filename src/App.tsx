@@ -13,6 +13,7 @@ import Inventario from "./pages/Inventario.tsx";
 import Empresas from "./pages/Empresas.tsx";
 import Patrocinadores from "./pages/Patrocinadores.tsx";
 import Miembros from "./pages/Miembros.tsx";
+import Login from "./pages/Login.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/login" element={<Login />} />
             <Route path="/" element={<Index />} />
             <Route path="/presupuestos" element={<Presupuestos />} />
             <Route path="/eventos-economicos" element={<EventosEconomicos />} />
