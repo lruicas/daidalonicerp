@@ -4,10 +4,11 @@ import BudgetToolbar from "@/components/presupuestos/BudgetToolbar";
 import BudgetFilters from "@/components/presupuestos/BudgetFilters";
 import BudgetTable from "@/components/presupuestos/BudgetTable";
 import { useState } from "react";
-import { mockBudgets, BudgetRow, Section, Priority } from "@/lib/budget-data";
+import { Section, Priority } from "@/lib/budget-data";
+import { useBudgets } from "@/contexts/BudgetContext";
 
 const Presupuestos = () => {
-  const [budgets, setBudgets] = useState<BudgetRow[]>(mockBudgets);
+  const { budgets, updateRow, importRows } = useBudgets();
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState<Section | "all">("all");
   const [filterPriority, setFilterPriority] = useState<Priority | "all">("all");
@@ -23,14 +24,6 @@ const Presupuestos = () => {
     return matchSearch && matchSection && matchPriority;
   });
 
-  const updateRow = (id: string, updates: Partial<BudgetRow>) => {
-    setBudgets((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
-  };
-
-  const handleImport = (rows: BudgetRow[]) => {
-    setBudgets((prev) => [...prev, ...rows]);
-  };
-
   return (
     <AppLayout>
       <div className="max-w-[1600px] mx-auto space-y-5">
@@ -39,7 +32,7 @@ const Presupuestos = () => {
           <h2 className="text-xl font-semibold text-foreground">Presupuestos</h2>
         </div>
 
-        <BudgetToolbar budgets={budgets} onImport={handleImport} />
+        <BudgetToolbar budgets={budgets} onImport={importRows} />
         <BudgetFilters
           search={search}
           onSearchChange={setSearch}
