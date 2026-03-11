@@ -54,7 +54,7 @@ const NavBar = () => {
           </button>
 
           {dirOpen && (
-            <div className="absolute top-full left-0 mt-1 min-w-[260px] rounded-lg bg-card shadow-lg border border-border z-[100] py-1">
+            <div className="absolute top-full left-0 mt-1 min-w-[260px] rounded-lg bg-card shadow-lg border border-border z-[200] py-1">
               {directoryLinks.map(({ label, icon: Icon, to }) => (
                 <Link
                   key={label}
