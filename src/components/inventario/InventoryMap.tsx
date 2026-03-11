@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { ZoomIn, ZoomOut, RotateCcw, QrCode, Trash2, Plus, GripVertical, Eye, Pencil, ArrowRight, PanelLeftClose, PanelLeft } from "lucide-react";
+import { ZoomIn, ZoomOut, RotateCcw, QrCode, Trash2, Plus, GripVertical, Eye, Pencil, ArrowRight, PanelLeftClose, PanelLeft, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -18,6 +18,7 @@ import QRDialog from "./map/QRDialog";
 import AddItemDialog from "./map/AddItemDialog";
 import ItemSidePanel from "./map/ItemSidePanel";
 import ItemDetailModal from "./map/ItemDetailModal";
+import AIAssistantPanel from "./map/AIAssistantPanel";
 
 interface Props {
   items: InventoryItem[];
