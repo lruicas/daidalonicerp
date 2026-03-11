@@ -1,42 +1,42 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import AppLayout from "@/components/AppLayout";
 import MemberFilters from "@/components/miembros/MemberFilters";
 import MemberTable from "@/components/miembros/MemberTable";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useRole } from "@/contexts/RoleContext";
-import { mockMembers } from "@/lib/members-data";
+import { useMembers } from "@/contexts/MembersContext";
 import type { Member, MemberStatus } from "@/lib/members-data";
 import type { Section } from "@/lib/budget-data";
 
 const Miembros = () => {
   const { role } = useRole();
   const canEdit = role === "Presidente";
-  const [items, setItems] = useState<Member[]>(mockMembers);
+  const { members, setMembers, updateMember } = useMembers();
   const [search, setSearch] = useState("");
   const [sectionFilter, setSectionFilter] = useState<Section | "all">("all");
   const [statusFilter, setStatusFilter] = useState<MemberStatus | "all">("all");
 
   const filtered = useMemo(() => {
-    return items.filter((m) => {
+    return members.filter((m) => {
       const q = search.toLowerCase();
       const matchesSearch = !q || `${m.nombre} ${m.apellidos}`.toLowerCase().includes(q) || m.correoUpv.toLowerCase().includes(q) || m.correoPersonal.toLowerCase().includes(q);
       const matchesSection = sectionFilter === "all" || m.seccion === sectionFilter;
       const matchesStatus = statusFilter === "all" || m.estatus === statusFilter;
       return matchesSearch && matchesSection && matchesStatus;
     });
-  }, [items, search, sectionFilter, statusFilter]);
+  }, [members, search, sectionFilter, statusFilter]);
 
-  const handleUpdate = (updated: Member) => setItems((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+  const handleUpdate = (updated: Member) => updateMember(updated);
 
   const handleAdd = () => {
-    const newId = `MBR-${String(items.length + 1).padStart(3, "0")}`;
+    const newId = `MBR-${String(members.length + 1).padStart(3, "0")}`;
     const newItem: Member = {
       id: newId, nombre: "Nuevo", apellidos: "Miembro", seccion: "E-Software", estatus: "Miembro",
       titulacion: "", centro: "", anioUniversitario: 1, telefono: "", correoUpv: "", correoPersonal: "",
       cumpleanos: "", tipoId: "DNI/NIF", numeroId: "", fechaEntrada: new Date().toISOString().slice(0, 10), fechaSalida: "",
     };
-    setItems((prev) => [newItem, ...prev]);
+    setMembers((prev) => [newItem, ...prev]);
   };
 
   return (
