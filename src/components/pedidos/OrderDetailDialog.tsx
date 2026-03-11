@@ -37,29 +37,42 @@ const OrderDetailDialog = ({ order, open, onOpenChange, onUpdate }: OrderDetailD
   const update = (patch: Partial<Order>) => onUpdate({ ...order, ...patch });
 
   const FileField = ({ label, value, field }: { label: string; value: string; field: keyof Order }) => (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <label className="text-xs font-medium text-muted-foreground">{label}</label>
-      <div className="flex items-center gap-2">
-        {value ? (
-          <Badge variant="secondary" className="gap-1.5">
-            <FileText className="h-3 w-3" />
-            {value}
+      {value ? (
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="gap-1.5 truncate max-w-full">
+            <FileText className="h-3 w-3 shrink-0" />
+            <span className="truncate">{value}</span>
           </Badge>
-        ) : (
-          <span className="text-xs text-muted-foreground">Sin archivo</span>
-        )}
-        {canEdit && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs gap-1"
-            onClick={() => update({ [field]: `${label.toLowerCase().replace(/ /g, "_")}_${order.id}.pdf` } as Partial<Order>)}
-          >
-            <Upload className="h-3 w-3" />
-            Subir
-          </Button>
-        )}
-      </div>
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs text-destructive hover:text-destructive shrink-0"
+              onClick={() => update({ [field]: "" } as Partial<Order>)}
+            >
+              Quitar
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div>
+          {canEdit ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 w-full"
+              onClick={() => update({ [field]: `${label.toLowerCase().replace(/ /g, "_")}_${order.id}.pdf` } as Partial<Order>)}
+            >
+              <Upload className="h-3 w-3" />
+              Subir {label}
+            </Button>
+          ) : (
+            <span className="text-xs text-muted-foreground">Sin archivo</span>
+          )}
+        </div>
+      )}
     </div>
   );
 
