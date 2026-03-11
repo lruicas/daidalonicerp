@@ -30,6 +30,15 @@ export interface MapLabel {
   y: number;
 }
 
+export interface MovementRecord {
+  id: string;
+  itemId: string;
+  fromZone: string;
+  toZone: string;
+  date: string;
+  movedBy: string;
+}
+
 export interface MapConfig {
   zones: MapZone[];
   labels: MapLabel[];
@@ -48,7 +57,6 @@ export const defaultZones: MapZone[] = [
   { id: "z3-b", name: "Cajón 2", type: "Caja", color: "rosa", x: 195, y: 295, width: 130, height: 60, parentId: "z3" },
   { id: "z4", name: "Rack servidor", type: "Rack", color: "turquesa", x: 620, y: 40, width: 140, height: 180, parentId: null },
   { id: "z5", name: "Almacén B", type: "Almacén", color: "naranja", x: 380, y: 280, width: 200, height: 160, parentId: null },
-  { id: "z-sin", name: "Sin ubicar", type: "Otro", color: "rosa", x: 620, y: 280, width: 160, height: 160, parentId: null },
 ];
 
 export const defaultLabels: MapLabel[] = [
