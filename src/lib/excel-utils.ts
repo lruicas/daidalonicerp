@@ -4,7 +4,7 @@ import { toast } from "sonner";
 /**
  * Export an array of objects as an .xlsx file.
  */
-export function exportToExcel<T extends Record<string, unknown>>(
+export function exportToExcel<T>(
   data: T[],
   columns: { key: keyof T; header: string }[],
   fileName: string
