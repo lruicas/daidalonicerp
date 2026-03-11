@@ -391,16 +391,6 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
             <Button variant="outline" size="icon" className="h-8 w-8 bg-card/90" onClick={handleZoomIn}><ZoomIn className="h-4 w-4" /></Button>
             <Button variant="outline" size="icon" className="h-8 w-8 bg-card/90" onClick={handleZoomOut}><ZoomOut className="h-4 w-4" /></Button>
             <Button variant="outline" size="icon" className="h-8 w-8 bg-card/90" onClick={handleReset}><RotateCcw className="h-4 w-4" /></Button>
-            <div className="h-px w-full bg-border my-0.5" />
-            <Button
-              variant={aiPanelOpen ? "default" : "outline"}
-              size="icon"
-              className="h-8 w-8 bg-card/90"
-              onClick={() => setAiPanelOpen(o => !o)}
-              title="Asistente IA"
-            >
-              <Sparkles className="h-4 w-4" />
-            </Button>
           </div>
 
           {!hasZones ? (
