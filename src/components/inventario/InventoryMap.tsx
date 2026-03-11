@@ -180,7 +180,17 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
         const targetZone = findZoneAtPoint(zones, pos.x, pos.y);
         const item = items.find(i => i.id === draggingItem);
         if (item && targetZone) {
+          const oldLocation = item.ubicacion || "Sin ubicación";
           onUpdate({ ...item, ubicacion: targetZone.name });
+          if (oldLocation !== targetZone.name) {
+            addMovement({
+              itemId: item.id,
+              fromZone: oldLocation,
+              toZone: targetZone.name,
+              date: new Date().toISOString().slice(0, 10),
+              movedBy: "Usuario actual",
+            });
+          }
           toast.success(`📍 '${item.nombre}' movido a '${targetZone.name}'`);
         } else if (item && !targetZone) {
           toast.info(`'${item.nombre}' fuera de zona`);
@@ -191,7 +201,7 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
     setDraggingZone(null);
     setResizingZone(null);
     setIsPanning(false);
-  }, [draggingItem, itemPositions, zones, items, onUpdate]);
+  }, [draggingItem, itemPositions, zones, items, onUpdate, addMovement]);
 
   // Drop from side panel (HTML drag)
   const handleSvgDrop = useCallback((e: React.DragEvent) => {
