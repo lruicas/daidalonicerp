@@ -8,11 +8,11 @@ import { toast } from "sonner";
 
 interface Props {
   budgets: BudgetRow[];
-  onImport: (rows: BudgetRow[]) => void;
+  onImport?: (rows: BudgetRow[]) => void;
 }
 
 const BudgetToolbar = ({ budgets, onImport }: Props) => {
-  const { canEdit } = useRole();
+  const { canEditPresupuestos: canEdit } = useRole();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleDownload = () => {
