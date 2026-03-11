@@ -73,7 +73,7 @@ const InventoryTable = ({ items, onUpdate, highlightId }: InventoryTableProps) =
           {items.map((item) => (
             <TableRow
               key={item.id}
-              className="group cursor-pointer hover:bg-muted/40 transition-colors"
+              className={`group cursor-pointer hover:bg-muted/40 transition-colors ${highlightId === item.id ? "bg-primary/10 ring-1 ring-primary/30" : ""}`}
               onDoubleClick={() => startEdit(item.id)}
             >
               {/* Foto */}
