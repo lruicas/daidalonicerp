@@ -1,12 +1,25 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { mockBudgets } from "@/lib/budget-data";
+import type { Priority } from "@/lib/budget-data";
 
-const data = [
-  { name: "Alta", value: 5, color: "hsl(340, 82%, 65%)" },
-  { name: "Media", value: 8, color: "hsl(30, 95%, 62%)" },
-  { name: "Baja", value: 3, color: "hsl(168, 62%, 55%)" },
-];
+const PRIORITY_COLORS: Record<Priority, string> = {
+  Alta: "hsl(340, 82%, 65%)",
+  Media: "hsl(30, 95%, 62%)",
+  Baja: "hsl(168, 62%, 55%)",
+};
 
 const PriorityDonut = () => {
+  const counts: Record<Priority, number> = { Alta: 0, Media: 0, Baja: 0 };
+  mockBudgets.forEach((b) => {
+    counts[b.prioridad]++;
+  });
+
+  const data = (["Alta", "Media", "Baja"] as Priority[]).map((p) => ({
+    name: p,
+    value: counts[p],
+    color: PRIORITY_COLORS[p],
+  }));
+
   return (
     <div className="flex items-center gap-4 w-full">
       <div className="w-[100px] h-[100px]">
