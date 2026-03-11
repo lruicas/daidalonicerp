@@ -14,7 +14,7 @@ const Header = () => {
       className="px-8 py-5 flex items-center justify-between"
       style={{ background: "linear-gradient(135deg, hsl(168, 62%, 55%), hsl(40, 95%, 62%), hsl(340, 82%, 65%))" }}
     >
-      <h1 className="text-2xl font-light tracking-wide text-primary-foreground">
+      <h1 className="text-2xl font-light tracking-wide text-primary-foreground font-display">
         Daidalonic <span className="font-semibold">ERP</span>
       </h1>
 
