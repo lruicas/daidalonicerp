@@ -45,7 +45,7 @@ const BudgetTable = ({ rows, onUpdateRow }: Props) => {
 
   const saveEdit = () => {
     if (editingId) {
-      onUpdateRow(editingId, draft);
+      onUpdateRow?.(editingId, draft);
       setEditingId(null);
       setDraft({});
     }
