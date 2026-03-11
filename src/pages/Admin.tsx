@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useRole } from "@/contexts/RoleContext";
+import { useMembers } from "@/contexts/MembersContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +27,7 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import {
-  mockAccessUsers, mockActivity, mockModuleUsage, mockVersions, mockBackups,
+  mockActivity, mockModuleUsage, mockVersions, mockBackups,
   ADMIN_ROLES,
   type AccessUser, type BackupEntry,
 } from "@/lib/admin-data";
