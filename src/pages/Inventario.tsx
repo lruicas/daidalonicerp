@@ -5,13 +5,15 @@ import InventoryFilters from "@/components/inventario/InventoryFilters";
 import InventoryTable from "@/components/inventario/InventoryTable";
 import InventoryMap from "@/components/inventario/InventoryMap";
 import ExcelToolbar from "@/components/ExcelToolbar";
+import AIAssistantPanel from "@/components/inventario/map/AIAssistantPanel";
 import { Button } from "@/components/ui/button";
-import { Plus, List, Map } from "lucide-react";
+import { Plus, List, Map, Sparkles } from "lucide-react";
 import { useRole } from "@/contexts/RoleContext";
 import { useInventory } from "@/contexts/InventoryContext";
 import type { InventoryItem, InventoryStatus } from "@/lib/inventory-data";
 import type { Section } from "@/lib/budget-data";
 import { exportToExcel, importFromExcel } from "@/lib/excel-utils";
+import { generateGeneralSuggestions, generateMapSuggestions } from "@/components/inventario/map/AIAssistantPanel";
 
 const INV_COLUMNS: { key: keyof InventoryItem; header: string }[] = [
   { key: "id", header: "ID" },
@@ -28,11 +30,12 @@ const INV_COLUMNS: { key: keyof InventoryItem; header: string }[] = [
 
 const Inventario = () => {
   const { canEditInventario: canEdit } = useRole();
-  const { items, setItems } = useInventory();
+  const { items, setItems, mapConfig } = useInventory();
   const [view, setView] = useState<"table" | "map">("table");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<InventoryStatus | "all">("all");
   const [sectionFilter, setSectionFilter] = useState<Section | "all">("all");
+  const [aiOpen, setAiOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const highlightId = searchParams.get("highlight");
 
@@ -45,6 +48,13 @@ const Inventario = () => {
       return matchesSearch && matchesStatus && matchesSection;
     });
   }, [items, search, statusFilter, sectionFilter]);
+
+  const suggestionCount = useMemo(() => {
+    const general = generateGeneralSuggestions(items);
+    const map = generateMapSuggestions(items, mapConfig.zones, mapConfig.itemPositions);
+    if (view === "table") return general.length;
+    return general.length + map.length;
+  }, [items, mapConfig.zones, mapConfig.itemPositions, view]);
 
   const handleUpdate = (updated: InventoryItem) => {
     setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
@@ -124,6 +134,24 @@ const Inventario = () => {
           <InventoryMap items={filtered} onUpdate={handleUpdate} />
         )}
       </div>
+
+      {/* Floating AI button */}
+      <button
+        onClick={() => setAiOpen(o => !o)}
+        className={`fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full shadow-lg flex items-center justify-center transition-colors ${
+          aiOpen ? "bg-primary text-primary-foreground" : "bg-card border text-primary hover:bg-accent"
+        }`}
+        title="Asistente IA"
+      >
+        <Sparkles className="h-5 w-5" />
+        {suggestionCount > 0 && !aiOpen && (
+          <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+            {suggestionCount}
+          </span>
+        )}
+      </button>
+
+      <AIAssistantPanel open={aiOpen} onClose={() => setAiOpen(false)} view={view} />
     </AppLayout>
   );
 };

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { ZoomIn, ZoomOut, RotateCcw, QrCode, Trash2, Plus, GripVertical, Eye, Pencil, ArrowRight, PanelLeftClose, PanelLeft, Sparkles } from "lucide-react";
+import { ZoomIn, ZoomOut, RotateCcw, QrCode, Trash2, Plus, GripVertical, Eye, Pencil, ArrowRight, PanelLeftClose, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -18,7 +18,7 @@ import QRDialog from "./map/QRDialog";
 import AddItemDialog from "./map/AddItemDialog";
 import ItemSidePanel from "./map/ItemSidePanel";
 import ItemDetailModal from "./map/ItemDetailModal";
-import AIAssistantPanel from "./map/AIAssistantPanel";
+
 
 interface Props {
   items: InventoryItem[];
@@ -76,7 +76,7 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
   const [detailItem, setDetailItem] = useState<InventoryItem | null>(null);
   const [panelCollapsed, setPanelCollapsed] = useState(isMobile);
   const [sidePanelDragItem, setSidePanelDragItem] = useState<string | null>(null);
-  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  
 
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -391,16 +391,6 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
             <Button variant="outline" size="icon" className="h-8 w-8 bg-card/90" onClick={handleZoomIn}><ZoomIn className="h-4 w-4" /></Button>
             <Button variant="outline" size="icon" className="h-8 w-8 bg-card/90" onClick={handleZoomOut}><ZoomOut className="h-4 w-4" /></Button>
             <Button variant="outline" size="icon" className="h-8 w-8 bg-card/90" onClick={handleReset}><RotateCcw className="h-4 w-4" /></Button>
-            <div className="h-px w-full bg-border my-0.5" />
-            <Button
-              variant={aiPanelOpen ? "default" : "outline"}
-              size="icon"
-              className="h-8 w-8 bg-card/90"
-              onClick={() => setAiPanelOpen(o => !o)}
-              title="Asistente IA"
-            >
-              <Sparkles className="h-4 w-4" />
-            </Button>
           </div>
 
           {!hasZones ? (
@@ -641,7 +631,7 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
         onUpdate={updated => { onUpdate(updated); setDetailItem(updated); }}
         onMoveRequest={() => toast.info("Arrastra el objeto a la nueva zona en el mapa")}
       />
-      <AIAssistantPanel open={aiPanelOpen} onClose={() => setAiPanelOpen(false)} />
+      
     </div>
   );
 };
