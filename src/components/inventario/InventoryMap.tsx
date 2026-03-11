@@ -18,7 +18,7 @@ import QRDialog from "./map/QRDialog";
 import AddItemDialog from "./map/AddItemDialog";
 import ItemSidePanel from "./map/ItemSidePanel";
 import ItemDetailModal from "./map/ItemDetailModal";
-import AIAssistantPanel from "./map/AIAssistantPanel";
+
 
 interface Props {
   items: InventoryItem[];
