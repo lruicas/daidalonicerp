@@ -52,7 +52,7 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
   const { canEditInventario: canEdit } = useRole();
   const isMobile = useIsMobile();
   const {
-    mapConfig, setItemPositions, addZone, updateZone, removeZone, addLabel, removeLabel, setItems,
+    mapConfig, setItemPositions, addZone, updateZone, removeZone, addLabel, removeLabel, setItems, addMovement,
   } = useInventory();
   const { zones, labels, itemPositions } = mapConfig;
 
