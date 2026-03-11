@@ -11,7 +11,8 @@ export function exportToExcel<T>(
 ) {
   const rows = data.map((item) =>
     columns.reduce((acc, col) => {
-      acc[col.header] = item[col.key] as unknown;
+      acc[col.header] = (item as Record<string, unknown>)[col.key as string];
+
       return acc;
     }, {} as Record<string, unknown>)
   );
