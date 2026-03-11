@@ -20,6 +20,7 @@ export interface MapZone {
   width: number;
   height: number;
   parentId: string | null; // null = top-level, string = subzone
+  capacity?: number; // max items, optional
 }
 
 export interface MapLabel {
