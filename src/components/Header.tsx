@@ -1,13 +1,8 @@
-import { useState } from "react";
-// Header uses Poppins for branding
 import { User } from "lucide-react";
+import { useRole } from "@/contexts/RoleContext";
 
 const Header = () => {
-  const [role, setRole] = useState<"Presidente" | "Miembro">("Presidente");
-
-  const toggleRole = () => {
-    setRole(prev => (prev === "Presidente" ? "Miembro" : "Presidente"));
-  };
+  const { role, toggleRole } = useRole();
 
   return (
     <header
