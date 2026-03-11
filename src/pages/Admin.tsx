@@ -34,7 +34,7 @@ import {
 
 const Admin = () => {
   const { role } = useRole();
-  const { members, updateMember, deactivateMember, removeMember } = useMembers();
+  const { members, setMembers, updateMember, deactivateMember, removeMember } = useMembers();
 
   // Build access users from shared members context
   const users: AccessUser[] = members.map((m) => ({
