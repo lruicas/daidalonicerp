@@ -9,7 +9,7 @@ const mainLinks = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/" },
   { label: "Presupuestos", icon: Wallet, to: "/presupuestos" },
   { label: "Eventos Económicos", icon: CalendarDays, to: "/eventos-economicos" },
-  { label: "Pedidos", icon: ShoppingCart, to: "#" },
+  { label: "Pedidos", icon: ShoppingCart, to: "/pedidos-orders" },
   { label: "Inventario", icon: Package, to: "#" },
 ];
 
