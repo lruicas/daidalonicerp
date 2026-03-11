@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, Upload } from "lucide-react";
 import { useRole } from "@/contexts/RoleContext";
 import OrderProgressBar from "./OrderProgressBar";
+import OcrScanner from "./OcrScanner";
 import type { Order, OrderStatus, ShippingStatus, PurchaseType } from "@/lib/orders-data";
 import { ORDER_STEPS, SHIPPING_STATUSES, PURCHASE_TYPES } from "@/lib/orders-data";
 import { EVENTS } from "@/lib/budget-data";
