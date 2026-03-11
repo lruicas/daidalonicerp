@@ -76,6 +76,7 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
   const [detailItem, setDetailItem] = useState<InventoryItem | null>(null);
   const [panelCollapsed, setPanelCollapsed] = useState(isMobile);
   const [sidePanelDragItem, setSidePanelDragItem] = useState<string | null>(null);
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   const svgRef = useRef<SVGSVGElement>(null);
 
