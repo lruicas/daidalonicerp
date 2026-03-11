@@ -1,17 +1,14 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { ZoomIn, ZoomOut, RotateCcw, QrCode, Trash2, Plus, GripVertical, Eye, Pencil, ArrowRight } from "lucide-react";
+import { ZoomIn, ZoomOut, RotateCcw, QrCode, Trash2, Plus, GripVertical, Eye, Pencil, ArrowRight, PanelLeftClose, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-  ContextMenuSeparator,
+  ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSeparator,
 } from "@/components/ui/context-menu";
 import { useRole } from "@/contexts/RoleContext";
 import { useInventory } from "@/contexts/InventoryContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { InventoryItem, InventoryStatus } from "@/lib/inventory-data";
 import type { MapZone } from "@/lib/zone-data";
 import { ZONE_BORDER_COLORS, findZoneAtPoint, getItemsInZone } from "@/lib/zone-data";
@@ -19,6 +16,8 @@ import MapToolbar from "./map/MapToolbar";
 import ZoneEditorDialog from "./map/ZoneEditorDialog";
 import QRDialog from "./map/QRDialog";
 import AddItemDialog from "./map/AddItemDialog";
+import ItemSidePanel from "./map/ItemSidePanel";
+import ItemDetailModal from "./map/ItemDetailModal";
 
 interface Props {
   items: InventoryItem[];
@@ -36,14 +35,21 @@ const STATUS_BORDER: Record<InventoryStatus, string> = {
 };
 
 const STATUS_BG: Record<InventoryStatus, string> = {
-  Nuevo: "hsla(168,62%,55%,0.2)",
-  Funciona: "hsla(142,60%,50%,0.2)",
-  Averiado: "hsla(30,95%,55%,0.2)",
-  Roto: "hsla(0,80%,58%,0.2)",
+  Nuevo: "hsla(168,62%,55%,0.15)",
+  Funciona: "hsla(142,60%,50%,0.15)",
+  Averiado: "hsla(30,95%,55%,0.15)",
+  Roto: "hsla(0,80%,58%,0.15)",
 };
+
+function itemRadius(units: number): number {
+  if (units >= 10) return 18;
+  if (units >= 5) return 15;
+  return 12;
+}
 
 const InventoryMap = ({ items, onUpdate }: Props) => {
   const { canEditInventario: canEdit } = useRole();
+  const isMobile = useIsMobile();
   const {
     mapConfig, setItemPositions, addZone, updateZone, removeZone, addLabel, removeLabel, setItems,
   } = useInventory();
@@ -66,6 +72,9 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
   const [zoneDialog, setZoneDialog] = useState<{ open: boolean; parentId?: string | null; initial?: Partial<MapZone> }>({ open: false });
   const [qrZone, setQrZone] = useState<MapZone | null>(null);
   const [addItemZone, setAddItemZone] = useState<{ open: boolean; zoneName: string }>({ open: false, zoneName: "" });
+  const [detailItem, setDetailItem] = useState<InventoryItem | null>(null);
+  const [panelCollapsed, setPanelCollapsed] = useState(isMobile);
+  const [sidePanelDragItem, setSidePanelDragItem] = useState<string | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -96,6 +105,8 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
     });
   }, [items, statusFilters, responsableFilter]);
 
+  const locatedItemIds = useMemo(() => new Set(Object.keys(itemPositions)), [itemPositions]);
+
   const matchesSearch = (item: InventoryItem) => {
     if (!search) return false;
     const q = search.toLowerCase();
@@ -112,7 +123,6 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
       density[z.id] = count;
       if (count > maxCount) maxCount = count;
     });
-    // Normalize
     Object.keys(density).forEach(k => { density[k] = density[k] / maxCount; });
     return density;
   }, [heatMap, zones, itemPositions, filteredItems]);
@@ -124,10 +134,18 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
     return "hsla(210,60%,55%,0.08)";
   };
 
+  // Zone item counts (for capacity display)
+  const zoneItemCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    zones.forEach(z => {
+      counts[z.id] = getItemsInZone(z.id, zones, itemPositions).filter(id => items.some(i => i.id === id)).length;
+    });
+    return counts;
+  }, [zones, itemPositions, items]);
+
   // Drag handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (draggingItem || draggingZone || resizingZone) return;
-    // Pan with middle button or when no item/zone targeted
     if (e.button === 1 || (e.button === 0 && e.target === svgRef.current)) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
@@ -139,27 +157,17 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
       setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
       return;
     }
-
     const pt = svgPoint(e.clientX, e.clientY);
-
     if (draggingItem) {
       setItemPositions(prev => ({ ...prev, [draggingItem]: { x: pt.x, y: pt.y } }));
     }
-
     if (draggingZone && editMode) {
       const zone = zones.find(z => z.id === draggingZone);
-      if (zone) {
-        updateZone({ ...zone, x: pt.x - zone.width / 2, y: pt.y - zone.height / 2 });
-      }
+      if (zone) updateZone({ ...zone, x: pt.x - zone.width / 2, y: pt.y - zone.height / 2 });
     }
-
     if (resizingZone && editMode) {
       const zone = zones.find(z => z.id === resizingZone);
-      if (zone) {
-        const newW = Math.max(60, pt.x - zone.x);
-        const newH = Math.max(40, pt.y - zone.y);
-        updateZone({ ...zone, width: newW, height: newH });
-      }
+      if (zone) updateZone({ ...zone, width: Math.max(60, pt.x - zone.x), height: Math.max(40, pt.y - zone.y) });
     }
   }, [isPanning, panStart, draggingItem, draggingZone, resizingZone, editMode, svgPoint, zones, setItemPositions, updateZone]);
 
@@ -173,8 +181,7 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
           onUpdate({ ...item, ubicacion: targetZone.name });
           toast.success(`📍 '${item.nombre}' movido a '${targetZone.name}'`);
         } else if (item && !targetZone) {
-          toast.info(`'${item.nombre}' fuera de zona — movimiento cancelado`);
-          // Could revert position here
+          toast.info(`'${item.nombre}' fuera de zona`);
         }
       }
     }
@@ -184,12 +191,128 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
     setIsPanning(false);
   }, [draggingItem, itemPositions, zones, items, onUpdate]);
 
+  // Drop from side panel (HTML drag)
+  const handleSvgDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const itemId = e.dataTransfer.getData("text/plain");
+    if (!itemId) return;
+    const pt = svgPoint(e.clientX, e.clientY);
+    setItemPositions(prev => ({ ...prev, [itemId]: { x: pt.x, y: pt.y } }));
+    const targetZone = findZoneAtPoint(zones, pt.x, pt.y);
+    const item = items.find(i => i.id === itemId);
+    if (item && targetZone) {
+      onUpdate({ ...item, ubicacion: targetZone.name });
+      toast.success(`📍 '${item.nombre}' ubicado en '${targetZone.name}'`);
+    } else if (item) {
+      toast.info(`'${item.nombre}' colocado en el mapa`);
+    }
+    setSidePanelDragItem(null);
+  }, [svgPoint, zones, items, onUpdate, setItemPositions]);
+
   const handleZoomIn = () => setZoom(z => Math.min(3, z + 0.25));
   const handleZoomOut = () => setZoom(z => Math.max(0.5, z - 0.25));
   const handleReset = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
 
+  const zoomToItem = (itemId: string) => {
+    const pos = itemPositions[itemId];
+    if (!pos) return;
+    setZoom(2);
+    setPan({ x: SVG_W / 2 - pos.x * 2, y: SVG_H / 2 - pos.y * 2 });
+  };
+
   const hasZones = zones.length > 0;
   const hasSearch = search.length > 0;
+
+  // Render zone
+  const renderZone = (zone: MapZone, isSubzone: boolean) => {
+    const parentColor = isSubzone ? zones.find(z => z.id === zone.parentId)?.color || zone.color : zone.color;
+    const colors = ZONE_BORDER_COLORS[parentColor];
+    const heat = heatMap ? zoneDensity[zone.id] || 0 : 0;
+    const count = zoneItemCounts[zone.id] || 0;
+    const atCapacity = zone.capacity ? count >= zone.capacity : false;
+
+    return (
+      <ContextMenu key={zone.id}>
+        <ContextMenuTrigger asChild>
+          <g>
+            <rect
+              x={zone.x} y={zone.y} width={zone.width} height={zone.height}
+              rx={isSubzone ? 4 : 6}
+              fill={heatMap ? heatColor(heat) : (isSubzone ? colors.lightBg : colors.bg)}
+              stroke={atCapacity ? "hsl(0,80%,58%)" : colors.border}
+              strokeWidth={editMode ? (isSubzone ? 1.5 : 2) : (isSubzone ? 0.8 : 1.2)}
+              strokeDasharray={editMode ? (isSubzone ? "4,2" : "6,3") : (isSubzone ? "3,3" : "none")}
+              style={{ cursor: editMode ? "move" : "default", transition: "fill 0.3s" }}
+              onMouseDown={e => { if (editMode) { e.stopPropagation(); setDraggingZone(zone.id); } }}
+            />
+            {/* Zone name */}
+            <text x={zone.x + 8} y={zone.y + (isSubzone ? 12 : 16)} fontSize={isSubzone ? 8 : 10} fontWeight={600}
+              fill={colors.border} opacity={isSubzone ? 0.7 : 1} style={{ pointerEvents: "none" }}>
+              {zone.name}
+            </text>
+            {/* Capacity indicator */}
+            {zone.capacity && !isSubzone && (
+              <text x={zone.x + zone.width - 8} y={zone.y + zone.height - 6} textAnchor="end"
+                fontSize={8} fill={atCapacity ? "hsl(0,80%,58%)" : colors.border} opacity={0.6}
+                style={{ pointerEvents: "none" }}>
+                {count}/{zone.capacity}
+              </text>
+            )}
+            {/* QR icon (parent zones only) */}
+            {!isSubzone && (
+              <g style={{ cursor: "pointer" }}
+                onClick={e => { e.stopPropagation(); setQrZone(zone); }}
+                transform={`translate(${zone.x + zone.width - 18}, ${zone.y + 5})`}>
+                <rect width={14} height={14} rx={2} fill="hsl(var(--card))" stroke={colors.border} strokeWidth={0.5} />
+                <text x={7} y={11} textAnchor="middle" fontSize={9} fill={colors.border}>Q</text>
+              </g>
+            )}
+            {/* Type label */}
+            {!isSubzone && (
+              <text x={zone.x + 8} y={zone.y + zone.height - 6} fontSize={8}
+                fill={colors.border} opacity={0.5} style={{ pointerEvents: "none" }}>
+                {zone.type}
+              </text>
+            )}
+            {/* Resize handle */}
+            {editMode && (
+              <rect
+                x={zone.x + zone.width - (isSubzone ? 8 : 10)} y={zone.y + zone.height - (isSubzone ? 8 : 10)}
+                width={isSubzone ? 8 : 10} height={isSubzone ? 8 : 10} rx={2}
+                fill={colors.border} fillOpacity={0.4}
+                style={{ cursor: "se-resize" }}
+                onMouseDown={e => { e.stopPropagation(); setResizingZone(zone.id); }}
+              />
+            )}
+          </g>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onClick={() => setAddItemZone({ open: true, zoneName: zone.name })}>
+            <Plus className="h-3.5 w-3.5 mr-2" />Añadir objeto aquí
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => setQrZone(zone)}>
+            <QrCode className="h-3.5 w-3.5 mr-2" />Ver código QR
+          </ContextMenuItem>
+          {canEdit && editMode && (
+            <>
+              <ContextMenuSeparator />
+              {!isSubzone && (
+                <ContextMenuItem onClick={() => setZoneDialog({ open: true, parentId: zone.id })}>
+                  <Plus className="h-3.5 w-3.5 mr-2" />Añadir subzona
+                </ContextMenuItem>
+              )}
+              <ContextMenuItem onClick={() => setZoneDialog({ open: true, initial: zone })}>
+                <Pencil className="h-3.5 w-3.5 mr-2" />Editar {isSubzone ? "subzona" : "zona"}
+              </ContextMenuItem>
+              <ContextMenuItem className="text-destructive" onClick={() => { removeZone(zone.id); toast.success("Zona eliminada"); }}>
+                <Trash2 className="h-3.5 w-3.5 mr-2" />Eliminar
+              </ContextMenuItem>
+            </>
+          )}
+        </ContextMenuContent>
+      </ContextMenu>
+    );
+  };
 
   return (
     <div className="space-y-3">
@@ -205,314 +328,234 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
         canEdit={canEdit}
       />
 
-      <div className="rounded-lg border bg-card overflow-hidden relative">
-        {/* Zoom controls */}
-        <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
-          <Button variant="outline" size="icon" className="h-8 w-8 bg-card/90" onClick={handleZoomIn}><ZoomIn className="h-4 w-4" /></Button>
-          <Button variant="outline" size="icon" className="h-8 w-8 bg-card/90" onClick={handleZoomOut}><ZoomOut className="h-4 w-4" /></Button>
-          <Button variant="outline" size="icon" className="h-8 w-8 bg-card/90" onClick={handleReset}><RotateCcw className="h-4 w-4" /></Button>
-        </div>
+      <div className="flex gap-3">
+        {/* Side panel - hidden on mobile by default, toggle with button */}
+        {isMobile ? (
+          !panelCollapsed && (
+            <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" onClick={() => setPanelCollapsed(true)}>
+              <div className="absolute left-0 top-0 bottom-0 w-72 bg-card border-r shadow-lg animate-slide-in-right" onClick={e => e.stopPropagation()}>
+                <ItemSidePanel
+                  items={filteredItems}
+                  locatedItemIds={locatedItemIds}
+                  collapsed={false}
+                  onToggle={() => setPanelCollapsed(true)}
+                  onDragStart={setSidePanelDragItem}
+                  onItemClick={setDetailItem}
+                  onZoomToItem={id => { zoomToItem(id); setPanelCollapsed(true); }}
+                />
+              </div>
+            </div>
+          )
+        ) : (
+          <ItemSidePanel
+            items={filteredItems}
+            locatedItemIds={locatedItemIds}
+            collapsed={panelCollapsed}
+            onToggle={() => setPanelCollapsed(c => !c)}
+            onDragStart={setSidePanelDragItem}
+            onItemClick={setDetailItem}
+            onZoomToItem={zoomToItem}
+          />
+        )}
 
-        {!hasZones ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-              <GripVertical className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">Parece que aún no has definido las zonas de tu espacio.</p>
-              <p className="text-xs text-muted-foreground mt-1">Comienza creando tu primer armario o estantería.</p>
-            </div>
-            {canEdit && (
-              <Button size="sm" onClick={() => setZoneDialog({ open: true, parentId: null })} className="gap-1.5">
-                <Plus className="h-4 w-4" />Crear primera zona
+        <div className="flex-1 rounded-lg border bg-card overflow-hidden relative min-w-0">
+          {/* Zoom controls + mobile panel toggle */}
+          <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
+            {isMobile && (
+              <Button variant="outline" size="icon" className="h-8 w-8 bg-card/90" onClick={() => setPanelCollapsed(false)}>
+                <PanelLeft className="h-4 w-4" />
               </Button>
             )}
+            <Button variant="outline" size="icon" className="h-8 w-8 bg-card/90" onClick={handleZoomIn}><ZoomIn className="h-4 w-4" /></Button>
+            <Button variant="outline" size="icon" className="h-8 w-8 bg-card/90" onClick={handleZoomOut}><ZoomOut className="h-4 w-4" /></Button>
+            <Button variant="outline" size="icon" className="h-8 w-8 bg-card/90" onClick={handleReset}><RotateCcw className="h-4 w-4" /></Button>
           </div>
-        ) : (
-          <svg
-            ref={svgRef}
-            viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-            className="w-full select-none"
-            style={{ maxHeight: 560, background: "hsl(var(--card))", cursor: isPanning ? "grabbing" : "default" }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          >
-            <g transform={`translate(${pan.x},${pan.y}) scale(${zoom})`}>
-              {/* Grid */}
-              {Array.from({ length: 12 }, (_, i) => (
-                <line key={`v${i}`} x1={i * (SVG_W / 11)} y1={0} x2={i * (SVG_W / 11)} y2={SVG_H}
-                  stroke="hsl(var(--border))" strokeWidth={0.3} strokeDasharray="4,8" />
-              ))}
-              {Array.from({ length: 8 }, (_, i) => (
-                <line key={`h${i}`} x1={0} y1={i * (SVG_H / 7)} x2={SVG_W} y2={i * (SVG_H / 7)}
-                  stroke="hsl(var(--border))" strokeWidth={0.3} strokeDasharray="4,8" />
-              ))}
 
-              {/* Zones — parent first, then children */}
-              {zones.filter(z => !z.parentId).map(zone => {
-                const colors = ZONE_BORDER_COLORS[zone.color];
-                const heat = heatMap ? zoneDensity[zone.id] || 0 : 0;
-                return (
-                  <ContextMenu key={zone.id}>
+          {!hasZones ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                <GripVertical className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Aún no has creado tu espacio.</p>
+                <p className="text-xs text-muted-foreground mt-1">Comienza dibujando tus zonas de almacenamiento.</p>
+              </div>
+              {canEdit && (
+                <Button size="sm" onClick={() => setZoneDialog({ open: true, parentId: null })} className="gap-1.5">
+                  <Plus className="h-4 w-4" />Crear primera zona
+                </Button>
+              )}
+            </div>
+          ) : (
+            <svg
+              ref={svgRef}
+              viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+              className="w-full select-none"
+              style={{ maxHeight: 560, background: "hsl(var(--card))", cursor: isPanning ? "grabbing" : "default" }}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onDragOver={e => e.preventDefault()}
+              onDrop={handleSvgDrop}
+            >
+              <g transform={`translate(${pan.x},${pan.y}) scale(${zoom})`}>
+                {/* Grid */}
+                {Array.from({ length: 12 }, (_, i) => (
+                  <line key={`v${i}`} x1={i * (SVG_W / 11)} y1={0} x2={i * (SVG_W / 11)} y2={SVG_H}
+                    stroke="hsl(var(--border))" strokeWidth={0.3} strokeDasharray="4,8" />
+                ))}
+                {Array.from({ length: 8 }, (_, i) => (
+                  <line key={`h${i}`} x1={0} y1={i * (SVG_H / 7)} x2={SVG_W} y2={i * (SVG_H / 7)}
+                    stroke="hsl(var(--border))" strokeWidth={0.3} strokeDasharray="4,8" />
+                ))}
+
+                {/* Zones — parent first, then children */}
+                {zones.filter(z => !z.parentId).map(z => renderZone(z, false))}
+                {zones.filter(z => z.parentId).map(z => renderZone(z, true))}
+
+                {/* Labels */}
+                {labels.map(label => (
+                  <ContextMenu key={label.id}>
                     <ContextMenuTrigger asChild>
-                      <g>
-                        <rect
-                          x={zone.x} y={zone.y} width={zone.width} height={zone.height}
-                          rx={6}
-                          fill={heatMap ? heatColor(heat) : colors.bg}
-                          stroke={colors.border}
-                          strokeWidth={editMode ? 2 : 1.2}
-                          strokeDasharray={editMode ? "6,3" : "none"}
-                          style={{ cursor: editMode ? "move" : "default", transition: "fill 0.3s" }}
-                          onMouseDown={e => { if (editMode) { e.stopPropagation(); setDraggingZone(zone.id); } }}
-                        />
-                        {/* Zone name */}
-                        <text x={zone.x + 8} y={zone.y + 16} fontSize={10} fontWeight={600}
-                          fill={colors.border} style={{ pointerEvents: "none" }}>
-                          {zone.name}
-                        </text>
-                        {/* QR icon */}
-                        <g
-                          style={{ cursor: "pointer" }}
-                          onClick={e => { e.stopPropagation(); setQrZone(zone); }}
-                          transform={`translate(${zone.x + zone.width - 18}, ${zone.y + 5})`}
-                        >
-                          <rect width={14} height={14} rx={2} fill="hsl(var(--card))" stroke={colors.border} strokeWidth={0.5} />
-                          <text x={7} y={11} textAnchor="middle" fontSize={9} fill={colors.border}>Q</text>
-                        </g>
-                        {/* Resize handle */}
-                        {editMode && (
-                          <rect
-                            x={zone.x + zone.width - 10} y={zone.y + zone.height - 10}
-                            width={10} height={10} rx={2}
-                            fill={colors.border} fillOpacity={0.4}
-                            style={{ cursor: "se-resize" }}
-                            onMouseDown={e => { e.stopPropagation(); setResizingZone(zone.id); }}
-                          />
-                        )}
-                        {/* Type label */}
-                        <text x={zone.x + 8} y={zone.y + zone.height - 6} fontSize={8}
-                          fill={colors.border} opacity={0.5} style={{ pointerEvents: "none" }}>
-                          {zone.type}
-                        </text>
-                      </g>
+                      <text x={label.x} y={label.y} fontSize={11} fontWeight={500}
+                        fill="hsl(var(--muted-foreground))" opacity={0.6}
+                        style={{ cursor: editMode ? "move" : "default", pointerEvents: editMode ? "auto" : "none" }}>
+                        {label.text}
+                      </text>
                     </ContextMenuTrigger>
-                    <ContextMenuContent>
-                      <ContextMenuItem onClick={() => setAddItemZone({ open: true, zoneName: zone.name })}>
-                        <Plus className="h-3.5 w-3.5 mr-2" />Añadir objeto aquí
-                      </ContextMenuItem>
-                      <ContextMenuItem onClick={() => setQrZone(zone)}>
-                        <QrCode className="h-3.5 w-3.5 mr-2" />Ver código QR
-                      </ContextMenuItem>
-                      {canEdit && editMode && (
-                        <>
-                          <ContextMenuSeparator />
-                          <ContextMenuItem onClick={() => setZoneDialog({ open: true, parentId: zone.id })}>
-                            <Plus className="h-3.5 w-3.5 mr-2" />Añadir subzona
-                          </ContextMenuItem>
-                          <ContextMenuItem onClick={() => setZoneDialog({ open: true, initial: zone })}>
-                            <Pencil className="h-3.5 w-3.5 mr-2" />Editar zona
-                          </ContextMenuItem>
-                          <ContextMenuItem className="text-destructive" onClick={() => { removeZone(zone.id); toast.success("Zona eliminada"); }}>
-                            <Trash2 className="h-3.5 w-3.5 mr-2" />Eliminar zona
-                          </ContextMenuItem>
-                        </>
-                      )}
-                    </ContextMenuContent>
+                    {editMode && (
+                      <ContextMenuContent>
+                        <ContextMenuItem className="text-destructive" onClick={() => { removeLabel(label.id); toast.success("Etiqueta eliminada"); }}>
+                          <Trash2 className="h-3.5 w-3.5 mr-2" />Eliminar etiqueta
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    )}
                   </ContextMenu>
-                );
-              })}
+                ))}
 
-              {/* Subzones */}
-              {zones.filter(z => z.parentId).map(zone => {
-                const parentColor = zones.find(z => z.id === zone.parentId)?.color || zone.color;
-                const colors = ZONE_BORDER_COLORS[parentColor];
-                const heat = heatMap ? zoneDensity[zone.id] || 0 : 0;
-                return (
-                  <ContextMenu key={zone.id}>
-                    <ContextMenuTrigger asChild>
-                      <g>
-                        <rect
-                          x={zone.x} y={zone.y} width={zone.width} height={zone.height}
-                          rx={4}
-                          fill={heatMap ? heatColor(heat) : colors.lightBg}
-                          stroke={colors.border}
-                          strokeWidth={editMode ? 1.5 : 0.8}
-                          strokeDasharray={editMode ? "4,2" : "3,3"}
-                          style={{ cursor: editMode ? "move" : "default", transition: "fill 0.3s" }}
-                          onMouseDown={e => { if (editMode) { e.stopPropagation(); setDraggingZone(zone.id); } }}
-                        />
-                        <text x={zone.x + 6} y={zone.y + 12} fontSize={8} fill={colors.border} opacity={0.7}
-                          style={{ pointerEvents: "none" }}>
-                          {zone.name}
-                        </text>
-                        {editMode && (
-                          <rect
-                            x={zone.x + zone.width - 8} y={zone.y + zone.height - 8}
-                            width={8} height={8} rx={2}
-                            fill={colors.border} fillOpacity={0.3}
-                            style={{ cursor: "se-resize" }}
-                            onMouseDown={e => { e.stopPropagation(); setResizingZone(zone.id); }}
-                          />
-                        )}
-                      </g>
-                    </ContextMenuTrigger>
-                    <ContextMenuContent>
-                      <ContextMenuItem onClick={() => setAddItemZone({ open: true, zoneName: zone.name })}>
-                        <Plus className="h-3.5 w-3.5 mr-2" />Añadir objeto aquí
-                      </ContextMenuItem>
-                      <ContextMenuItem onClick={() => setQrZone(zone)}>
-                        <QrCode className="h-3.5 w-3.5 mr-2" />Ver código QR
-                      </ContextMenuItem>
-                      {canEdit && editMode && (
-                        <>
-                          <ContextMenuSeparator />
-                          <ContextMenuItem onClick={() => setZoneDialog({ open: true, initial: zone })}>
-                            <Pencil className="h-3.5 w-3.5 mr-2" />Editar subzona
-                          </ContextMenuItem>
-                          <ContextMenuItem className="text-destructive" onClick={() => { removeZone(zone.id); toast.success("Subzona eliminada"); }}>
-                            <Trash2 className="h-3.5 w-3.5 mr-2" />Eliminar
-                          </ContextMenuItem>
-                        </>
-                      )}
-                    </ContextMenuContent>
-                  </ContextMenu>
-                );
-              })}
+                {/* Items */}
+                {filteredItems.map(item => {
+                  const pos = itemPositions[item.id];
+                  if (!pos) return null;
+                  const isMatch = hasSearch && matchesSearch(item);
+                  const isDimmed = hasSearch && !isMatch;
+                  const isSelected = selectedItem === item.id;
+                  const borderColor = STATUS_BORDER[item.estado];
+                  const bgColor = STATUS_BG[item.estado];
+                  const r = isMatch ? itemRadius(item.unidades) + 4 : isSelected ? itemRadius(item.unidades) + 2 : itemRadius(item.unidades);
 
-              {/* Labels */}
-              {labels.map(label => (
-                <ContextMenu key={label.id}>
-                  <ContextMenuTrigger asChild>
-                    <text x={label.x} y={label.y} fontSize={11} fontWeight={500}
-                      fill="hsl(var(--muted-foreground))" opacity={0.6}
-                      style={{ cursor: editMode ? "move" : "default", pointerEvents: editMode ? "auto" : "none" }}>
-                      {label.text}
-                    </text>
-                  </ContextMenuTrigger>
-                  {editMode && (
-                    <ContextMenuContent>
-                      <ContextMenuItem className="text-destructive" onClick={() => { removeLabel(label.id); toast.success("Etiqueta eliminada"); }}>
-                        <Trash2 className="h-3.5 w-3.5 mr-2" />Eliminar etiqueta
-                      </ContextMenuItem>
-                    </ContextMenuContent>
-                  )}
-                </ContextMenu>
-              ))}
-
-              {/* Items */}
-              {filteredItems.map(item => {
-                const pos = itemPositions[item.id];
-                if (!pos) return null;
-                const isMatch = hasSearch && matchesSearch(item);
-                const isDimmed = hasSearch && !isMatch;
-                const isSelected = selectedItem === item.id;
-                const borderColor = STATUS_BORDER[item.estado];
-                const bgColor = STATUS_BG[item.estado];
-                const r = isMatch ? 16 : isSelected ? 15 : 12;
-
-                return (
-                  <ContextMenu key={item.id}>
-                    <ContextMenuTrigger asChild>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <g
-                            onMouseDown={e => {
-                              if (!canEdit) return;
-                              e.stopPropagation();
-                              setDraggingItem(item.id);
-                              setSelectedItem(item.id);
-                            }}
-                            onClick={() => setSelectedItem(prev => prev === item.id ? null : item.id)}
-                            style={{ cursor: canEdit ? (draggingItem === item.id ? "grabbing" : "grab") : "pointer", transition: "opacity 0.2s" }}
-                            opacity={isDimmed ? 0.2 : 1}
-                          >
-                            {/* Glow for search match */}
-                            {isMatch && (
-                              <circle cx={pos.x} cy={pos.y} r={r + 4} fill="hsla(50,90%,55%,0.3)" stroke="hsl(50,90%,55%)" strokeWidth={1.5}>
-                                <animate attributeName="r" values={`${r + 2};${r + 6};${r + 2}`} dur="1.5s" repeatCount="indefinite" />
-                              </circle>
-                            )}
-                            {/* Background circle */}
-                            <circle cx={pos.x} cy={pos.y} r={r}
-                              fill={bgColor} stroke={borderColor}
-                              strokeWidth={isSelected ? 3 : 2}
-                              style={{ transition: "r 0.2s" }}
-                            />
-                            {/* Photo or initials */}
-                            {item.fotoUrl ? (
-                              <>
-                                <clipPath id={`clip-${item.id}`}>
-                                  <circle cx={pos.x} cy={pos.y} r={r - 2} />
-                                </clipPath>
-                                <image
-                                  href={item.fotoUrl}
-                                  x={pos.x - r + 2} y={pos.y - r + 2}
-                                  width={(r - 2) * 2} height={(r - 2) * 2}
-                                  clipPath={`url(#clip-${item.id})`}
-                                  style={{ pointerEvents: "none" }}
-                                />
-                              </>
-                            ) : (
-                              <text x={pos.x} y={pos.y + 4} textAnchor="middle"
-                                fill={borderColor} fontSize={r > 13 ? 9 : 7} fontWeight={700}
-                                style={{ pointerEvents: "none", userSelect: "none" }}>
-                                {item.nombre.slice(0, 2).toUpperCase()}
-                              </text>
-                            )}
-                          </g>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-foreground/90 text-background text-xs border-0 max-w-[200px]">
-                          <p className="font-semibold">{item.nombre}</p>
-                          <p className="opacity-70">{item.responsable || "Sin asignar"}</p>
-                          <p className="opacity-70">{item.ubicacion || "Sin ubicación"}</p>
-                          <p className="opacity-70">Estado: {item.estado}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </ContextMenuTrigger>
-                    <ContextMenuContent>
-                      <ContextMenuItem onClick={() => toast.info("Navegar a tabla — funcionalidad en desarrollo")}>
-                        <Eye className="h-3.5 w-3.5 mr-2" />Ver en tabla
-                      </ContextMenuItem>
-                      <ContextMenuItem onClick={() => toast.info("Edición — doble clic en tabla")}>
-                        <Pencil className="h-3.5 w-3.5 mr-2" />Editar
-                      </ContextMenuItem>
-                      <ContextMenuItem onClick={() => toast.info("Arrastra el objeto a la nueva zona")}>
-                        <ArrowRight className="h-3.5 w-3.5 mr-2" />Mover a otra zona
-                      </ContextMenuItem>
-                    </ContextMenuContent>
-                  </ContextMenu>
-                );
-              })}
-            </g>
-          </svg>
-        )}
+                  return (
+                    <ContextMenu key={item.id}>
+                      <ContextMenuTrigger asChild>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <g
+                              onMouseDown={e => {
+                                if (!canEdit) return;
+                                e.stopPropagation();
+                                setDraggingItem(item.id);
+                                setSelectedItem(item.id);
+                              }}
+                              onClick={() => {
+                                setSelectedItem(prev => prev === item.id ? null : item.id);
+                                setDetailItem(item);
+                              }}
+                              style={{
+                                cursor: canEdit ? (draggingItem === item.id ? "grabbing" : "grab") : "pointer",
+                                transition: "opacity 0.2s",
+                                filter: isMatch ? "none" : undefined,
+                              }}
+                              opacity={isDimmed ? 0.15 : 1}
+                            >
+                              {/* Glow for search match */}
+                              {isMatch && (
+                                <circle cx={pos.x} cy={pos.y} r={r + 4} fill="hsla(50,90%,55%,0.3)" stroke="hsl(50,90%,55%)" strokeWidth={1.5}>
+                                  <animate attributeName="r" values={`${r + 2};${r + 6};${r + 2}`} dur="1.5s" repeatCount="indefinite" />
+                                </circle>
+                              )}
+                              {/* Shadow */}
+                              <circle cx={pos.x + 1} cy={pos.y + 1} r={r} fill="hsla(0,0%,0%,0.08)" />
+                              {/* Background circle */}
+                              <circle cx={pos.x} cy={pos.y} r={r}
+                                fill={bgColor} stroke={borderColor}
+                                strokeWidth={isSelected ? 3 : 2}
+                              />
+                              {/* Photo or initials */}
+                              {item.fotoUrl ? (
+                                <>
+                                  <clipPath id={`clip-${item.id}`}>
+                                    <circle cx={pos.x} cy={pos.y} r={r - 2} />
+                                  </clipPath>
+                                  <image
+                                    href={item.fotoUrl}
+                                    x={pos.x - r + 2} y={pos.y - r + 2}
+                                    width={(r - 2) * 2} height={(r - 2) * 2}
+                                    clipPath={`url(#clip-${item.id})`}
+                                    style={{ pointerEvents: "none" }}
+                                  />
+                                </>
+                              ) : (
+                                <text x={pos.x} y={pos.y + 4} textAnchor="middle"
+                                  fill={borderColor} fontSize={r > 14 ? 9 : 7} fontWeight={700}
+                                  style={{ pointerEvents: "none", userSelect: "none" }}>
+                                  {item.nombre.slice(0, 2).toUpperCase()}
+                                </text>
+                              )}
+                              {/* Units badge for larger items */}
+                              {item.unidades > 1 && (
+                                <>
+                                  <circle cx={pos.x + r - 3} cy={pos.y - r + 3} r={6} fill="hsl(var(--foreground))" />
+                                  <text x={pos.x + r - 3} y={pos.y - r + 6} textAnchor="middle"
+                                    fontSize={7} fill="hsl(var(--background))" fontWeight={700}
+                                    style={{ pointerEvents: "none" }}>
+                                    {item.unidades > 99 ? "99+" : item.unidades}
+                                  </text>
+                                </>
+                              )}
+                            </g>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-foreground/90 text-background text-xs border-0 max-w-[220px] p-3">
+                            <p className="font-semibold">{item.nombre}</p>
+                            <p className="opacity-70">× {item.unidades} unidades</p>
+                            <p className="opacity-70">{item.responsable || "Sin asignar"}</p>
+                            <p className="opacity-70">{item.ubicacion || "Sin ubicación"}</p>
+                            <div className="flex items-center gap-1 mt-1">
+                              <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: borderColor }} />
+                              <span className="opacity-70">{item.estado}</span>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent>
+                        <ContextMenuItem onClick={() => setDetailItem(item)}>
+                          <Eye className="h-3.5 w-3.5 mr-2" />Ver detalles
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => toast.info("Arrastra el objeto a la nueva zona")}>
+                          <ArrowRight className="h-3.5 w-3.5 mr-2" />Mover a otra zona
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
+                  );
+                })}
+              </g>
+            </svg>
+          )}
+        </div>
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 text-xs">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: STATUS_BORDER.Nuevo }} />
-          <span className="text-muted-foreground">Nuevo</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: STATUS_BORDER.Funciona }} />
-          <span className="text-muted-foreground">Funciona</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: STATUS_BORDER.Averiado }} />
-          <span className="text-muted-foreground">Averiado</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: STATUS_BORDER.Roto }} />
-          <span className="text-muted-foreground">Roto</span>
-        </div>
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
+        {(["Nuevo", "Funciona", "Averiado", "Roto"] as InventoryStatus[]).map(s => (
+          <div key={s} className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: STATUS_BORDER[s] }} />
+            <span className="text-muted-foreground">{s}</span>
+          </div>
+        ))}
         {heatMap && (
           <>
             <div className="h-4 w-px bg-border" />
-            <span className="text-muted-foreground">Mapa de calor:</span>
+            <span className="text-muted-foreground">Calor:</span>
             <div className="flex items-center gap-1">
               <div className="w-4 h-3 rounded" style={{ backgroundColor: "hsla(210,60%,55%,0.15)" }} />
               <span className="text-muted-foreground">Baja</span>
@@ -558,6 +601,13 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
         }}
         zoneName={addItemZone.zoneName}
         nextId={`INV-${String(items.length + 1).padStart(3, "0")}`}
+      />
+      <ItemDetailModal
+        item={detailItem}
+        open={!!detailItem}
+        onClose={() => setDetailItem(null)}
+        onUpdate={updated => { onUpdate(updated); setDetailItem(updated); }}
+        onMoveRequest={() => toast.info("Arrastra el objeto a la nueva zona en el mapa")}
       />
     </div>
   );

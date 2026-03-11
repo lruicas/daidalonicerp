@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,14 @@ const ZoneEditorDialog = ({ open, onClose, onSave, initial, parentId = null }: P
   const [name, setName] = useState(initial?.name || "");
   const [type, setType] = useState<ZoneType>(initial?.type || "Armario");
   const [color, setColor] = useState<ZoneBorderColor>(initial?.color || "turquesa");
+  const [capacity, setCapacity] = useState<string>(initial?.capacity?.toString() || "");
+
+  useEffect(() => {
+    setName(initial?.name || "");
+    setType(initial?.type || "Armario");
+    setColor(initial?.color || "turquesa");
+    setCapacity(initial?.capacity?.toString() || "");
+  }, [initial, open]);
 
   const handleSave = () => {
     if (!name.trim()) return;
@@ -32,6 +40,7 @@ const ZoneEditorDialog = ({ open, onClose, onSave, initial, parentId = null }: P
       width: initial?.width || (parentId ? 120 : 200),
       height: initial?.height || (parentId ? 60 : 140),
       parentId: parentId ?? initial?.parentId ?? null,
+      capacity: capacity ? parseInt(capacity, 10) : undefined,
     });
     onClose();
   };
@@ -47,14 +56,20 @@ const ZoneEditorDialog = ({ open, onClose, onSave, initial, parentId = null }: P
             <Label>Nombre</Label>
             <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Armario A" autoFocus />
           </div>
-          <div className="space-y-1.5">
-            <Label>Tipo</Label>
-            <Select value={type} onValueChange={v => setType(v as ZoneType)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {ZONE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Tipo</Label>
+              <Select value={type} onValueChange={v => setType(v as ZoneType)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ZONE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Capacidad máx.</Label>
+              <Input type="number" min={0} value={capacity} onChange={e => setCapacity(e.target.value)} placeholder="Sin límite" />
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label>Color de borde</Label>
