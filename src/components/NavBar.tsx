@@ -16,7 +16,7 @@ const mainLinks = [
 const directoryLinks = [
   { label: "Empresas", icon: Building2, to: "/empresas" },
   { label: "Patrocinadores / Colaboradores", icon: Handshake, to: "/patrocinadores" },
-  { label: "Miembros", icon: UserCheck, to: "#" },
+  { label: "Miembros", icon: UserCheck, to: "/miembros" },
 ];
 
 const NavBar = () => {
