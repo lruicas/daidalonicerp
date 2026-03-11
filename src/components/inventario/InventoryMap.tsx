@@ -213,13 +213,23 @@ const InventoryMap = ({ items, onUpdate }: Props) => {
     const targetZone = findZoneAtPoint(zones, pt.x, pt.y);
     const item = items.find(i => i.id === itemId);
     if (item && targetZone) {
+      const oldLocation = item.ubicacion || "Sin ubicación";
       onUpdate({ ...item, ubicacion: targetZone.name });
+      if (oldLocation !== targetZone.name) {
+        addMovement({
+          itemId: item.id,
+          fromZone: oldLocation,
+          toZone: targetZone.name,
+          date: new Date().toISOString().slice(0, 10),
+          movedBy: "Usuario actual",
+        });
+      }
       toast.success(`📍 '${item.nombre}' ubicado en '${targetZone.name}'`);
     } else if (item) {
       toast.info(`'${item.nombre}' colocado en el mapa`);
     }
     setSidePanelDragItem(null);
-  }, [svgPoint, zones, items, onUpdate, setItemPositions]);
+  }, [svgPoint, zones, items, onUpdate, setItemPositions, addMovement]);
 
   const handleZoomIn = () => setZoom(z => Math.min(3, z + 0.25));
   const handleZoomOut = () => setZoom(z => Math.max(0.5, z - 0.25));
