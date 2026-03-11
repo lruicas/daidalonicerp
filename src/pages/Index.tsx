@@ -1,48 +1,55 @@
 import AppLayout from "@/components/AppLayout";
-import { LayoutDashboard, TrendingUp, Users, Package } from "lucide-react";
-
-const statCards = [
-  { label: "Presupuesto total", value: "€12,450", icon: TrendingUp, color: "primary" },
-  { label: "Miembros activos", value: "24", icon: Users, color: "secondary" },
-  { label: "Pedidos pendientes", value: "8", icon: Package, color: "accent" },
-];
+import { LayoutDashboard } from "lucide-react";
+import KpiCard from "@/components/dashboard/KpiCard";
+import PriorityDonut from "@/components/dashboard/PriorityDonut";
+import OrdersBySection from "@/components/dashboard/OrdersBySection";
+import BudgetEvolution from "@/components/dashboard/BudgetEvolution";
+import UpcomingEvents from "@/components/dashboard/UpcomingEvents";
+import YearSelector from "@/components/dashboard/YearSelector";
 
 const Index = () => {
   return (
     <AppLayout>
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="flex items-center gap-3">
-          <LayoutDashboard className="h-6 w-6 text-primary" strokeWidth={1.5} />
-          <h2 className="text-2xl font-semibold text-foreground">Dashboard</h2>
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <LayoutDashboard className="h-5 w-5 text-primary" strokeWidth={1.5} />
+            <h2 className="text-xl font-semibold text-foreground">Dashboard</h2>
+          </div>
+          <YearSelector />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {statCards.map(({ label, value, icon: Icon, color }) => (
-            <div key={label} className="rounded-xl bg-card border border-border overflow-hidden">
-              <div
-                className={`px-5 py-3 flex items-center gap-2 text-primary-foreground ${
-                  color === "primary"
-                    ? "bg-primary"
-                    : color === "secondary"
-                    ? "bg-secondary"
-                    : "bg-accent"
-                }`}
-              >
-                <Icon className="h-4 w-4" strokeWidth={1.5} />
-                <span className="text-sm font-medium">{label}</span>
-              </div>
-              <div className="px-5 py-6">
-                <p className="text-3xl font-semibold text-foreground">{value}</p>
-              </div>
-            </div>
-          ))}
+        {/* KPI row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard
+            title="Dinero disponible año actual"
+            value="12.450 €"
+            variant="primary"
+            trend={{ value: "+3.2% vs mes anterior", positive: true }}
+          />
+          <KpiCard
+            title="Dinero por eventos"
+            value="32.800 €"
+            variant="secondary"
+            trend={{ value: "+12.5% acumulado", positive: true }}
+          />
+          <KpiCard
+            title="Pedidos pendientes"
+            value="8"
+            variant="accent"
+            trend={{ value: "2 urgentes", positive: false }}
+          />
+          <KpiCard title="Presupuestos por prioridad" value="" variant="primary">
+            <PriorityDonut />
+          </KpiCard>
         </div>
 
-        <div className="rounded-xl bg-card border border-border p-6">
-          <h3 className="text-lg font-medium text-foreground mb-4">Actividad reciente</h3>
-          <p className="text-sm text-muted-foreground">
-            Aquí se mostrarán los últimos movimientos, eventos económicos y actualizaciones del equipo.
-          </p>
+        {/* Charts row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <OrdersBySection />
+          <BudgetEvolution />
+          <UpcomingEvents />
         </div>
       </div>
     </AppLayout>

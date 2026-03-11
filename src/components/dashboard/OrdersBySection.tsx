@@ -6,6 +6,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
 
 const data = [
@@ -54,7 +55,7 @@ const OrdersBySection = () => {
             />
             <Bar dataKey="pedidos" radius={[6, 6, 0, 0]}>
               {data.map((_, index) => (
-                <rect key={index} fill={colors[index % colors.length]} />
+                <Cell key={index} fill={colors[index]} />
               ))}
             </Bar>
           </BarChart>

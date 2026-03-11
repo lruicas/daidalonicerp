@@ -1,4 +1,5 @@
 import { useState } from "react";
+// Header uses Poppins for branding
 import { User } from "lucide-react";
 
 const Header = () => {
