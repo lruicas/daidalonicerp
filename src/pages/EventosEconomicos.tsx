@@ -32,10 +32,9 @@ const EVENT_COLUMNS: { key: keyof EconomicEvent; header: string }[] = [
 const EventosEconomicos = () => {
   const { canEdit } = useRole();
   const [events, setEvents] = useState<EconomicEvent[]>(mockEvents);
+  const [view, setView] = useState<"table" | "calendar">("table");
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<EventStatus | "all">("all");
-
-  const [newEvent, setNewEvent] = useState<Partial<EconomicEvent>>({
     nombre: "", descripcion: "", fechaInicio: "", fechaFin: "",
     colaborador: SPONSORS[0], presupuesto: 0, estado: "Sin comenzar", observaciones: "",
   });
