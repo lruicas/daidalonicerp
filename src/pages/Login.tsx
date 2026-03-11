@@ -43,7 +43,7 @@ const Login = () => {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-4"
+      className="h-screen flex flex-col items-center justify-center px-4 overflow-auto"
       style={{
         background: "linear-gradient(135deg, hsl(168, 62%, 55%), hsl(40, 95%, 62%), hsl(340, 82%, 65%))",
       }}
