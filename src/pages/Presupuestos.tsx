@@ -6,8 +6,10 @@ import BudgetTable from "@/components/presupuestos/BudgetTable";
 import { useState } from "react";
 import { Section, Priority } from "@/lib/budget-data";
 import { useBudgets } from "@/contexts/BudgetContext";
+import { useRole } from "@/contexts/RoleContext";
 
 const Presupuestos = () => {
+  const { canEditPresupuestos } = useRole();
   const { budgets, updateRow, importRows } = useBudgets();
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState<Section | "all">("all");
@@ -32,7 +34,7 @@ const Presupuestos = () => {
           <h2 className="text-xl font-semibold text-foreground">Presupuestos</h2>
         </div>
 
-        <BudgetToolbar budgets={budgets} onImport={importRows} />
+        <BudgetToolbar budgets={budgets} onImport={canEditPresupuestos ? importRows : undefined} />
         <BudgetFilters
           search={search}
           onSearchChange={setSearch}
@@ -41,7 +43,7 @@ const Presupuestos = () => {
           filterPriority={filterPriority}
           onPriorityChange={setFilterPriority}
         />
-        <BudgetTable rows={filtered} onUpdateRow={updateRow} />
+        <BudgetTable rows={filtered} onUpdateRow={canEditPresupuestos ? updateRow : undefined} />
       </div>
     </AppLayout>
   );

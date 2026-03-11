@@ -19,7 +19,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface Props {
   rows: BudgetRow[];
-  onUpdateRow: (id: string, updates: Partial<BudgetRow>) => void;
+  onUpdateRow?: (id: string, updates: Partial<BudgetRow>) => void;
 }
 
 const priorityColor: Record<Priority, string> = {
@@ -29,7 +29,7 @@ const priorityColor: Record<Priority, string> = {
 };
 
 const BudgetTable = ({ rows, onUpdateRow }: Props) => {
-  const { canEdit } = useRole();
+  const { canEditPresupuestos: canEdit } = useRole();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<BudgetRow>>({});
 
@@ -45,7 +45,7 @@ const BudgetTable = ({ rows, onUpdateRow }: Props) => {
 
   const saveEdit = () => {
     if (editingId) {
-      onUpdateRow(editingId, draft);
+      onUpdateRow?.(editingId, draft);
       setEditingId(null);
       setDraft({});
     }

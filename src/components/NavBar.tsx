@@ -23,7 +23,7 @@ const directoryLinks = [
 const NavBar = () => {
   const [dirOpen, setDirOpen] = useState(false);
   const { pathname } = useLocation();
-  const { role } = useRole();
+  const { isAdmin } = useRole();
 
   return (
     <nav className="relative" style={{ backgroundColor: "hsl(168, 45%, 42%)" }}>
@@ -70,7 +70,7 @@ const NavBar = () => {
           )}
         </div>
 
-        {role === "Presidente" && (
+        {isAdmin && (
           <Link
             to="/admin"
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-primary-foreground transition-opacity ${
