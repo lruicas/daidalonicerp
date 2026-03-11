@@ -1,9 +1,10 @@
 import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
-import { CalendarDays, Plus } from "lucide-react";
+import { CalendarDays, Plus, List, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EventFilters from "@/components/eventos/EventFilters";
 import EventTable from "@/components/eventos/EventTable";
+import EventCalendarView from "@/components/eventos/EventCalendarView";
 import ExcelToolbar from "@/components/ExcelToolbar";
 import { mockEvents, EconomicEvent, EventStatus, SPONSORS, EVENT_STATUSES } from "@/lib/events-data";
 import { useRole } from "@/contexts/RoleContext";
@@ -31,6 +32,7 @@ const EVENT_COLUMNS: { key: keyof EconomicEvent; header: string }[] = [
 const EventosEconomicos = () => {
   const { canEdit } = useRole();
   const [events, setEvents] = useState<EconomicEvent[]>(mockEvents);
+  const [view, setView] = useState<"table" | "calendar">("table");
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<EventStatus | "all">("all");
 
@@ -170,11 +172,38 @@ const EventosEconomicos = () => {
                 </DialogContent>
               </Dialog>
             )}
+            {/* View toggle */}
+            <div className="flex items-center rounded-md border bg-muted/30 p-0.5">
+              <button
+                onClick={() => setView("table")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  view === "table" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <List className="h-3.5 w-3.5" />
+                Tabla
+              </button>
+              <button
+                onClick={() => setView("calendar")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  view === "calendar" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                Calendario
+              </button>
+            </div>
           </div>
         </div>
 
-        <EventFilters search={search} onSearchChange={setSearch} filterStatus={filterStatus} onStatusChange={setFilterStatus} />
-        <EventTable rows={filtered} onUpdateRow={updateRow} />
+        {view === "table" ? (
+          <>
+            <EventFilters search={search} onSearchChange={setSearch} filterStatus={filterStatus} onStatusChange={setFilterStatus} />
+            <EventTable rows={filtered} onUpdateRow={updateRow} />
+          </>
+        ) : (
+          <EventCalendarView events={filtered} />
+        )}
       </div>
     </AppLayout>
   );
