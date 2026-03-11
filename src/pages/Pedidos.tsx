@@ -88,14 +88,41 @@ const Pedidos = () => {
           </div>
           <div className="flex items-center gap-3">
             <ExcelToolbar onExport={handleExport} onImport={handleImport} disabled={!canEdit} />
+            {/* View toggle */}
+            <div className="flex items-center rounded-md border bg-muted/30 p-0.5">
+              <button
+                onClick={() => setView("table")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  view === "table" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <List className="h-3.5 w-3.5" />
+                Tabla
+              </button>
+              <button
+                onClick={() => setView("timeline")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  view === "timeline" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <GanttChart className="h-3.5 w-3.5" />
+                Timeline
+              </button>
+            </div>
             {canEdit && (
               <Button onClick={handleAdd} className="gap-2"><Plus className="h-4 w-4" />Nuevo pedido</Button>
             )}
           </div>
         </div>
 
-        <OrderFilters search={search} onSearchChange={setSearch} statusFilter={statusFilter} onStatusChange={setStatusFilter} typeFilter={typeFilter} onTypeChange={setTypeFilter} />
-        <OrderTable orders={filtered} onSelect={setSelectedOrder} />
+        {view === "table" ? (
+          <>
+            <OrderFilters search={search} onSearchChange={setSearch} statusFilter={statusFilter} onStatusChange={setStatusFilter} typeFilter={typeFilter} onTypeChange={setTypeFilter} />
+            <OrderTable orders={filtered} onSelect={setSelectedOrder} />
+          </>
+        ) : (
+          <OrderTimeline orders={filtered} />
+        )}
         <OrderDetailDialog order={selectedOrder} open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)} onUpdate={handleUpdate} />
       </div>
     </AppLayout>
