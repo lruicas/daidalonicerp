@@ -34,7 +34,18 @@ import {
 
 const Admin = () => {
   const { role } = useRole();
-  const [users, setUsers] = useState<AccessUser[]>(mockAccessUsers);
+  const { members, updateMember, deactivateMember, removeMember } = useMembers();
+
+  // Build access users from shared members context
+  const users: AccessUser[] = members.map((m) => ({
+    id: m.id,
+    nombre: `${m.nombre} ${m.apellidos}`,
+    correoUpv: m.correoUpv,
+    rol: m.estatus === "Coordinador de sección" || m.estatus === "Coordinador de proyecto" || m.estatus === "Miembro" || m.estatus === "Presidente"
+      ? m.estatus as AccessUser["rol"]
+      : "Miembro" as AccessUser["rol"],
+    activo: !m.fechaSalida,
+  }));
   const [backups, setBackups] = useState<BackupEntry[]>(mockBackups);
   const [retentionWeeks, setRetentionWeeks] = useState(4);
   const [inviteOpen, setInviteOpen] = useState(false);
