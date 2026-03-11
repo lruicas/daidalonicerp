@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { BudgetProvider } from "@/contexts/BudgetContext";
+import { InventoryProvider } from "@/contexts/InventoryContext";
 import Index from "./pages/Index.tsx";
 import Presupuestos from "./pages/Presupuestos.tsx";
 import EventosEconomicos from "./pages/EventosEconomicos.tsx";
@@ -23,6 +24,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <RoleProvider>
     <BudgetProvider>
+    <InventoryProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -43,6 +45,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+    </InventoryProvider>
     </BudgetProvider>
     </RoleProvider>
   </QueryClientProvider>

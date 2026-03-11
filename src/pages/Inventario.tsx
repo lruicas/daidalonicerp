@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import InventoryFilters from "@/components/inventario/InventoryFilters";
 import InventoryTable from "@/components/inventario/InventoryTable";
@@ -6,10 +7,11 @@ import ExcelToolbar from "@/components/ExcelToolbar";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useRole } from "@/contexts/RoleContext";
+import { useInventory } from "@/contexts/InventoryContext";
 import type { InventoryItem, InventoryStatus } from "@/lib/inventory-data";
 import type { Section } from "@/lib/budget-data";
-import { mockInventory } from "@/lib/inventory-data";
 import { exportToExcel, importFromExcel } from "@/lib/excel-utils";
+import { useState } from "react";
 
 const INV_COLUMNS: { key: keyof InventoryItem; header: string }[] = [
   { key: "id", header: "ID" },
@@ -26,10 +28,12 @@ const INV_COLUMNS: { key: keyof InventoryItem; header: string }[] = [
 
 const Inventario = () => {
   const { canEdit } = useRole();
-  const [items, setItems] = useState<InventoryItem[]>(mockInventory);
+  const { items, setItems } = useInventory();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<InventoryStatus | "all">("all");
   const [sectionFilter, setSectionFilter] = useState<Section | "all">("all");
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get("highlight");
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
@@ -87,7 +91,7 @@ const Inventario = () => {
         </div>
 
         <InventoryFilters search={search} onSearchChange={setSearch} statusFilter={statusFilter} onStatusChange={setStatusFilter} sectionFilter={sectionFilter} onSectionChange={setSectionFilter} />
-        <InventoryTable items={filtered} onUpdate={handleUpdate} />
+        <InventoryTable items={filtered} onUpdate={handleUpdate} highlightId={highlightId} />
       </div>
     </AppLayout>
   );
