@@ -77,13 +77,13 @@ const OrderTable = ({ orders, onSelect }: OrderTableProps) => (
             <TableCell>
               <div className="flex items-center justify-center gap-1">
                 {o.proformaUrl && (
-                  <FileText className="h-3.5 w-3.5 text-primary" title="Proforma" />
+                  <span title="Proforma"><FileText className="h-3.5 w-3.5 text-primary" /></span>
                 )}
                 {o.geaUrl && (
-                  <FileText className="h-3.5 w-3.5 text-secondary" title="GEA" />
+                  <span title="GEA"><FileText className="h-3.5 w-3.5 text-secondary" /></span>
                 )}
                 {o.facturaUrl && (
-                  <FileText className="h-3.5 w-3.5 text-accent" title="Factura" />
+                  <span title="Factura"><FileText className="h-3.5 w-3.5 text-accent" /></span>
                 )}
               </div>
             </TableCell>
