@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Sparkles, CheckCircle2, ArrowRight, Lightbulb, X, ChevronDown, ChevronUp, AlertTriangle, UserX, MapPin, Package } from "lucide-react";
+import { Sparkles, CheckCircle2, ArrowRight, Lightbulb, X, ChevronDown, ChevronUp, AlertTriangle, UserX, MapPin, Package, Copy, Trash2, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -10,17 +10,78 @@ import type { MapZone } from "@/lib/zone-data";
 
 export interface Suggestion {
   id: string;
-  type: "relocate" | "capacity" | "coherence" | "group" | "low-stock" | "no-responsible" | "no-location" | "obsolete";
+  type: "relocate" | "capacity" | "coherence" | "group" | "low-stock" | "no-responsible" | "no-location" | "obsolete" | "duplicate";
   category: "general" | "map";
   title: string;
   description: string;
   itemIds: string[];
   targetZone?: string;
   confidence: number;
+  actionLabel: string;
+  actionType: "relocate" | "delete" | "highlight" | "assign" | "merge";
+}
+
+/* ── Duplicate detection helpers ── */
+function normalizeStr(s: string) {
+  return s.toLowerCase().trim().replace(/\s+/g, " ");
+}
+
+function areSimilar(a: string, b: string): boolean {
+  const na = normalizeStr(a);
+  const nb = normalizeStr(b);
+  if (na === nb) return true;
+  // one contains the other
+  if (na.includes(nb) || nb.includes(na)) return true;
+  // Levenshtein-ish: for short strings check edit distance
+  if (na.length < 4 || nb.length < 4) return false;
+  let matches = 0;
+  const shorter = na.length <= nb.length ? na : nb;
+  const longer = na.length > nb.length ? na : nb;
+  for (let i = 0; i < shorter.length; i++) {
+    if (longer.includes(shorter[i])) matches++;
+  }
+  return matches / longer.length > 0.85;
+}
+
+export function findDuplicates(items: InventoryItem[]): { groups: InventoryItem[][] } {
+  const used = new Set<string>();
+  const groups: InventoryItem[][] = [];
+  for (let i = 0; i < items.length; i++) {
+    if (used.has(items[i].id)) continue;
+    const group = [items[i]];
+    for (let j = i + 1; j < items.length; j++) {
+      if (used.has(items[j].id)) continue;
+      if (areSimilar(items[i].nombre, items[j].nombre)) {
+        group.push(items[j]);
+        used.add(items[j].id);
+      }
+    }
+    if (group.length > 1) {
+      used.add(items[i].id);
+      groups.push(group);
+    }
+  }
+  return { groups };
 }
 
 function generateGeneralSuggestions(items: InventoryItem[]): Suggestion[] {
   const suggestions: Suggestion[] = [];
+
+  // Duplicates
+  const { groups } = findDuplicates(items);
+  groups.forEach((group, idx) => {
+    suggestions.push({
+      id: `duplicate-${idx}`,
+      type: "duplicate",
+      category: "general",
+      title: `"${group[0].nombre}" duplicado (${group.length}×)`,
+      description: `IDs: ${group.map(i => i.id).join(", ")}. Revisa y fusiona o elimina los duplicados.`,
+      itemIds: group.map(i => i.id),
+      confidence: 0.95,
+      actionLabel: "Eliminar duplicados",
+      actionType: "delete",
+    });
+  });
 
   // Low stock
   const lowStock = items.filter(i => i.unidades <= 1 && i.estado !== "Roto");
@@ -33,6 +94,8 @@ function generateGeneralSuggestions(items: InventoryItem[]): Suggestion[] {
       description: `Los siguientes objetos tienen 1 unidad o menos: ${lowStock.slice(0, 3).map(i => i.nombre).join(", ")}${lowStock.length > 3 ? "…" : ""}.`,
       itemIds: lowStock.map(i => i.id),
       confidence: 0.88,
+      actionLabel: "Ver elementos",
+      actionType: "highlight",
     });
   }
 
@@ -47,6 +110,8 @@ function generateGeneralSuggestions(items: InventoryItem[]): Suggestion[] {
       description: `Hay objetos sin responsable asignado: ${noResp.slice(0, 3).map(i => i.nombre).join(", ")}${noResp.length > 3 ? "…" : ""}.`,
       itemIds: noResp.map(i => i.id),
       confidence: 0.92,
+      actionLabel: "Asignar responsable",
+      actionType: "assign",
     });
   }
 
@@ -61,10 +126,12 @@ function generateGeneralSuggestions(items: InventoryItem[]): Suggestion[] {
       description: `Objetos sin ubicación definida: ${noLoc.slice(0, 3).map(i => i.nombre).join(", ")}${noLoc.length > 3 ? "…" : ""}.`,
       itemIds: noLoc.map(i => i.id),
       confidence: 0.90,
+      actionLabel: "Asignar ubicación",
+      actionType: "assign",
     });
   }
 
-  // Obsolete (Roto items)
+  // Obsolete
   const obsolete = items.filter(i => i.estado === "Roto");
   if (obsolete.length > 0) {
     suggestions.push({
@@ -75,10 +142,12 @@ function generateGeneralSuggestions(items: InventoryItem[]): Suggestion[] {
       description: `Considera dar de baja o reparar: ${obsolete.slice(0, 3).map(i => i.nombre).join(", ")}${obsolete.length > 3 ? "…" : ""}.`,
       itemIds: obsolete.map(i => i.id),
       confidence: 0.75,
+      actionLabel: "Eliminar rotos",
+      actionType: "delete",
     });
   }
 
-  // Section distribution imbalance
+  // Section imbalance
   const sectionCounts: Record<string, number> = {};
   items.forEach(i => { sectionCounts[i.seccion] = (sectionCounts[i.seccion] || 0) + 1; });
   const entries = Object.entries(sectionCounts).sort((a, b) => b[1] - a[1]);
@@ -91,6 +160,8 @@ function generateGeneralSuggestions(items: InventoryItem[]): Suggestion[] {
       description: `El ${Math.round(entries[0][1] / items.length * 100)}% de los objetos pertenecen a "${entries[0][0]}". Revisa si la distribución es correcta.`,
       itemIds: [],
       confidence: 0.65,
+      actionLabel: "Ver sección",
+      actionType: "highlight",
     });
   }
 
@@ -113,9 +184,9 @@ function generateMapSuggestions(items: InventoryItem[], zones: MapZone[], itemPo
   });
 
   Object.entries(sectionZoneMap).forEach(([section, zoneCounts]) => {
-    const entries = Object.entries(zoneCounts).sort((a, b) => b[1] - a[1]);
-    if (entries.length > 1) {
-      const mainZone = entries[0][0];
+    const zEntries = Object.entries(zoneCounts).sort((a, b) => b[1] - a[1]);
+    if (zEntries.length > 1) {
+      const mainZone = zEntries[0][0];
       const sectionItems = locatedItems.filter(i => i.seccion === section);
       const outliers = sectionItems.filter(item => {
         const pos = itemPositions[item.id];
@@ -129,10 +200,12 @@ function generateMapSuggestions(items: InventoryItem[], zones: MapZone[], itemPo
           type: "coherence",
           category: "map",
           title: `Consolidar ${section}`,
-          description: `${Math.round(entries[0][1] / sectionItems.length * 100)}% en "${mainZone}". ${outliers.length} disperso(s).`,
+          description: `${Math.round(zEntries[0][1] / sectionItems.length * 100)}% en "${mainZone}". ${outliers.length} disperso(s).`,
           itemIds: outliers.map(i => i.id),
           targetZone: mainZone,
           confidence: 0.85,
+          actionLabel: "Mover a zona",
+          actionType: "relocate",
         });
       }
     }
@@ -157,12 +230,14 @@ function generateMapSuggestions(items: InventoryItem[], zones: MapZone[], itemPo
           description: `Al ${Math.round(count / zone.capacity! * 100)}% de capacidad. ${averiados.length} averiado(s) reubicables.`,
           itemIds: averiados.map(i => i.id),
           confidence: 0.78,
+          actionLabel: "Reubicar averiados",
+          actionType: "relocate",
         });
       }
     }
   });
 
-  // Damaged items grouping
+  // Damaged grouping
   const damaged = locatedItems.filter(i => i.estado === "Averiado" || i.estado === "Roto");
   if (damaged.length >= 2) {
     const damagedZones = new Set<string>();
@@ -181,11 +256,13 @@ function generateMapSuggestions(items: InventoryItem[], zones: MapZone[], itemPo
         description: `${damaged.length} dañados en ${damagedZones.size} zonas. Considera una zona de reparación.`,
         itemIds: damaged.map(i => i.id),
         confidence: 0.72,
+        actionLabel: "Agrupar",
+        actionType: "relocate",
       });
     }
   }
 
-  // Unlocated items
+  // Unlocated
   const unlocated = items.filter(i => !itemPositions[i.id]);
   unlocated.slice(0, 3).forEach(item => {
     const sameSection = locatedItems.filter(i => i.seccion === item.seccion);
@@ -202,6 +279,8 @@ function generateMapSuggestions(items: InventoryItem[], zones: MapZone[], itemPo
           itemIds: [item.id],
           targetZone: zone.name,
           confidence: 0.9,
+          actionLabel: "Colocar en mapa",
+          actionType: "relocate",
         });
       }
     }
@@ -219,6 +298,7 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   "no-responsible": <UserX className="h-3.5 w-3.5" />,
   "no-location": <MapPin className="h-3.5 w-3.5" />,
   obsolete: <AlertTriangle className="h-3.5 w-3.5" />,
+  duplicate: <Copy className="h-3.5 w-3.5" />,
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -230,6 +310,7 @@ const TYPE_LABELS: Record<string, string> = {
   "no-responsible": "Responsable",
   "no-location": "Ubicación",
   obsolete: "Obsoleto",
+  duplicate: "Duplicado",
 };
 
 interface Props {
@@ -239,7 +320,7 @@ interface Props {
 }
 
 const AIAssistantPanel = ({ open, onClose, view }: Props) => {
-  const { items, mapConfig, setItemPositions } = useInventory();
+  const { items, setItems, mapConfig, setItemPositions } = useInventory();
   const { zones, itemPositions } = mapConfig;
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -256,21 +337,57 @@ const AIAssistantPanel = ({ open, onClose, view }: Props) => {
   }, [suggestions, view]);
 
   const handleApply = (suggestion: Suggestion) => {
-    if (suggestion.targetZone) {
-      const targetZone = zones.find(z => z.name === suggestion.targetZone);
-      if (targetZone) {
-        const newPositions: Record<string, { x: number; y: number }> = {};
-        suggestion.itemIds.forEach((id, i) => {
-          newPositions[id] = {
-            x: targetZone.x + 30 + (i % 4) * 36,
-            y: targetZone.y + 30 + Math.floor(i / 4) * 36,
-          };
-        });
-        setItemPositions(prev => ({ ...prev, ...newPositions }));
+    switch (suggestion.actionType) {
+      case "relocate": {
+        if (suggestion.targetZone) {
+          const targetZone = zones.find(z => z.name === suggestion.targetZone);
+          if (targetZone) {
+            const newPositions: Record<string, { x: number; y: number }> = {};
+            suggestion.itemIds.forEach((id, i) => {
+              newPositions[id] = {
+                x: targetZone.x + 30 + (i % 4) * 36,
+                y: targetZone.y + 30 + Math.floor(i / 4) * 36,
+              };
+            });
+            setItemPositions(prev => ({ ...prev, ...newPositions }));
+          }
+        }
+        toast.success(`Elementos reubicados: ${suggestion.title}`);
+        break;
+      }
+      case "delete": {
+        const idsToRemove = suggestion.type === "duplicate"
+          ? suggestion.itemIds.slice(1) // keep first, remove rest
+          : suggestion.itemIds;
+        setItems(prev => prev.filter(i => !idsToRemove.includes(i.id)));
+        toast.success(
+          suggestion.type === "duplicate"
+            ? `Duplicados eliminados. Se mantuvo "${items.find(i => i.id === suggestion.itemIds[0])?.nombre}".`
+            : `${idsToRemove.length} elemento(s) eliminado(s).`
+        );
+        break;
+      }
+      case "highlight": {
+        toast.info(`${suggestion.itemIds.length} elemento(s) afectados: ${suggestion.title}`);
+        break;
+      }
+      case "assign": {
+        const label = suggestion.type === "no-responsible" ? "Sin asignar" : "Por definir";
+        const field = suggestion.type === "no-responsible" ? "responsable" : "ubicacion";
+        setItems(prev => prev.map(i =>
+          suggestion.itemIds.includes(i.id) && !(i as any)[field].trim()
+            ? { ...i, [field]: label }
+            : i
+        ));
+        toast.success(`${suggestion.itemIds.length} elemento(s) marcados como "${label}".`);
+        break;
+      }
+      case "merge": {
+        toast.info("Fusión disponible próximamente.");
+        break;
       }
     }
     setAppliedIds(prev => new Set([...prev, suggestion.id]));
-    toast.success(`Sugerencia aplicada: ${suggestion.title}`);
   };
 
   if (!open) return null;
@@ -280,7 +397,7 @@ const AIAssistantPanel = ({ open, onClose, view }: Props) => {
   const pendingCount = visibleSuggestions.filter(s => !appliedIds.has(s.id)).length;
 
   return (
-    <div className="fixed right-4 top-1/4 z-50 w-80 rounded-xl border bg-card shadow-xl animate-in slide-in-from-right-5 max-h-[60vh] flex flex-col">
+    <div className="fixed right-4 top-1/4 z-[100] w-80 rounded-xl border bg-card shadow-xl animate-in slide-in-from-right-5 max-h-[60vh] flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-primary/5 to-accent/5 rounded-t-xl">
         <div className="flex items-center gap-2">
@@ -388,9 +505,9 @@ function SuggestionGroup({
               <div className="mt-2 ml-6 space-y-2">
                 <p className="text-xs text-muted-foreground">{s.description}</p>
                 <div className="flex items-center gap-2">
-                  {s.targetZone && !isApplied && (
+                  {!isApplied && (
                     <Button size="sm" className="h-7 text-xs gap-1" onClick={() => onApply(s)}>
-                      <CheckCircle2 className="h-3 w-3" />Aplicar
+                      <CheckCircle2 className="h-3 w-3" />{s.actionLabel}
                     </Button>
                   )}
                   {isApplied && (

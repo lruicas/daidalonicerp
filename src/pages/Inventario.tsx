@@ -6,10 +6,12 @@ import InventoryTable from "@/components/inventario/InventoryTable";
 import InventoryMap from "@/components/inventario/InventoryMap";
 import ExcelToolbar from "@/components/ExcelToolbar";
 import AIAssistantPanel from "@/components/inventario/map/AIAssistantPanel";
+import { findDuplicates } from "@/components/inventario/map/AIAssistantPanel";
 import { Button } from "@/components/ui/button";
 import { Plus, List, Map, Sparkles } from "lucide-react";
 import { useRole } from "@/contexts/RoleContext";
 import { useInventory } from "@/contexts/InventoryContext";
+import { toast } from "sonner";
 import type { InventoryItem, InventoryStatus } from "@/lib/inventory-data";
 import type { Section } from "@/lib/budget-data";
 import { exportToExcel, importFromExcel } from "@/lib/excel-utils";
@@ -67,6 +69,19 @@ const Inventario = () => {
       estado: "Nuevo", seccion: "E-Hardware", enlace: "", observaciones: "",
       fecha: new Date().toISOString().slice(0, 10), fotoUrl: "", presupuestoId: "",
     };
+
+    // Check for duplicates before adding
+    const { groups } = findDuplicates([...items, newItem]);
+    const isDuplicate = groups.some(g => g.some(i => i.id === newId));
+
+    if (isDuplicate) {
+      const existing = items.find(i => i.nombre.toLowerCase().trim() === newItem.nombre.toLowerCase().trim());
+      toast.warning(
+        `⚠️ Ya existe un elemento similar: "${existing?.nombre}" (${existing?.id}). Se añadió de todas formas, revisa los duplicados.`,
+        { duration: 6000 }
+      );
+    }
+
     setItems((prev) => [newItem, ...prev]);
   };
 
@@ -81,6 +96,19 @@ const Inventario = () => {
         fotoUrl: "",
         presupuestoId: "",
       }));
+
+      // Check duplicates on import
+      const allItems = [...items, ...withIds];
+      const { groups } = findDuplicates(allItems);
+      const importedDups = groups.filter(g => g.some(i => withIds.some(w => w.id === i.id)));
+      if (importedDups.length > 0) {
+        toast.warning(
+          `⚠️ Se detectaron ${importedDups.length} posible(s) duplicado(s) en la importación. Revisa el asistente IA.`,
+          { duration: 6000 }
+        );
+        setAiOpen(true);
+      }
+
       setItems((prev) => [...prev, ...withIds]);
     });
   };
@@ -138,7 +166,7 @@ const Inventario = () => {
       {/* Floating AI button */}
       <button
         onClick={() => setAiOpen(o => !o)}
-        className={`fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full shadow-lg flex items-center justify-center transition-colors ${
+        className={`fixed bottom-6 right-6 z-[100] h-12 w-12 rounded-full shadow-lg flex items-center justify-center transition-colors ${
           aiOpen ? "bg-primary text-primary-foreground" : "bg-card border text-primary hover:bg-accent"
         }`}
         title="Asistente IA"
