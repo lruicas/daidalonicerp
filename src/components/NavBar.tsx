@@ -10,7 +10,7 @@ const mainLinks = [
   { label: "Presupuestos", icon: Wallet, to: "/presupuestos" },
   { label: "Eventos Económicos", icon: CalendarDays, to: "/eventos-economicos" },
   { label: "Pedidos", icon: ShoppingCart, to: "/pedidos-orders" },
-  { label: "Inventario", icon: Package, to: "#" },
+  { label: "Inventario", icon: Package, to: "/inventario" },
 ];
 
 const directoryLinks = [
