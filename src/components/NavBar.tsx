@@ -32,7 +32,7 @@ const NavBar = () => {
   const { isAdmin } = useRole();
 
   return (
-    <nav className="relative z-[120] isolate overflow-visible" style={{ backgroundColor: "hsl(168, 45%, 42%)" }}>
+    <nav className="relative z-40 isolate overflow-visible" style={{ backgroundColor: "hsl(168, 45%, 42%)" }}>
       <div className="flex items-center gap-1 px-4 sm:px-8 py-2 sm:py-3 overflow-x-auto scrollbar-hide">
         {mainLinks.map(({ label, icon: Icon, to }) => (
           <Link
