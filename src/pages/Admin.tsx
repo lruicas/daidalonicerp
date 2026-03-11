@@ -84,9 +84,7 @@ const Admin = () => {
       cumpleanos: "", tipoId: "DNI/NIF" as const, numeroId: "",
       fechaEntrada: new Date().toISOString().slice(0, 10), fechaSalida: "",
     };
-    updateMember(newMember);
-    // Also add via setMembers since updateMember only updates existing
-    const { setMembers } = { setMembers: (fn: any) => {} }; // handled below
+    setMembers((prev) => [...prev, newMember]);
     setInviteEmail("");
     setInviteOpen(false);
     toast.success("Invitación enviada");
