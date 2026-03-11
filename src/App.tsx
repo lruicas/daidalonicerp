@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { RoleProvider } from "@/contexts/RoleContext";
 import Index from "./pages/Index.tsx";
 import Presupuestos from "./pages/Presupuestos.tsx";
+import EventosEconomicos from "./pages/EventosEconomicos.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
