@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,12 +17,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, Upload } from "lucide-react";
+import { toast } from "sonner";
 import { useRole } from "@/contexts/RoleContext";
+import { useInventory } from "@/contexts/InventoryContext";
 import OrderProgressBar from "./OrderProgressBar";
 import OcrScanner from "./OcrScanner";
+import ClonedInventoryItems from "./ClonedInventoryItems";
 import type { Order, OrderStatus, ShippingStatus, PurchaseType } from "@/lib/orders-data";
 import { ORDER_STEPS, SHIPPING_STATUSES, PURCHASE_TYPES } from "@/lib/orders-data";
 import { EVENTS } from "@/lib/budget-data";
+import type { InventoryItem } from "@/lib/inventory-data";
 
 interface OrderDetailDialogProps {
   order: Order | null;
@@ -30,12 +35,82 @@ interface OrderDetailDialogProps {
   onUpdate: (updated: Order) => void;
 }
 
+/** Simulated products that would come from budget/order line items */
+const SIMULATED_PRODUCTS: Record<string, { nombre: string; unidades: number; seccion: string }[]> = {
+  "PED-001": [
+    { nombre: "Licencia Adobe CC (anual)", unidades: 10, seccion: "E-Software" },
+    { nombre: "Licencia Adobe Fonts", unidades: 10, seccion: "E-Software" },
+  ],
+  "PED-002": [
+    { nombre: "Monitor 4K 27\"", unidades: 3, seccion: "E-Hardware" },
+  ],
+  "PED-003": [
+    { nombre: "Hosting AWS (1 año)", unidades: 1, seccion: "E-Software" },
+  ],
+  "PED-004": [
+    { nombre: "Servicio catering Gala (200 pax)", unidades: 1, seccion: "RRPP-Corporativa" },
+  ],
+  "PED-005": [
+    { nombre: "Teclado mecánico Cherry MX", unidades: 10, seccion: "E-Hardware" },
+  ],
+  "PED-006": [
+    { nombre: "Camisetas corporativas", unidades: 100, seccion: "RRPP-Marketing" },
+    { nombre: "Tazas corporativas", unidades: 50, seccion: "RRPP-Marketing" },
+  ],
+};
+
 const OrderDetailDialog = ({ order, open, onOpenChange, onUpdate }: OrderDetailDialogProps) => {
   const { canEdit } = useRole();
+  const { clonedByOrder, registerCloned, items: inventoryItems } = useInventory();
+  const cloningRef = useRef<Set<string>>(new Set());
 
   if (!order) return null;
 
-  const update = (patch: Partial<Order>) => onUpdate({ ...order, ...patch });
+  const clonedItems = clonedByOrder[order.id] || [];
+
+  const update = (patch: Partial<Order>) => {
+    const updated = { ...order, ...patch };
+
+    // Detect status change to "Terminado"
+    if (
+      patch.estado === "Terminado" &&
+      order.estado !== "Terminado" &&
+      !clonedByOrder[order.id] &&
+      !cloningRef.current.has(order.id)
+    ) {
+      cloningRef.current.add(order.id);
+      toast("✅ Pedido terminado. Generando elementos en inventario...", {
+        duration: 3000,
+      });
+
+      const products = SIMULATED_PRODUCTS[order.id] || [
+        { nombre: order.nombre, unidades: 1, seccion: "E-Hardware" },
+      ];
+
+      setTimeout(() => {
+        const baseIndex = inventoryItems.length;
+        const newItems: InventoryItem[] = products.map((p, i) => ({
+          id: `INV-${String(baseIndex + i + 1).padStart(3, "0")}`,
+          nombre: p.nombre,
+          unidades: p.unidades,
+          ubicacion: "",
+          responsable: "",
+          estado: "Nuevo" as const,
+          seccion: p.seccion as InventoryItem["seccion"],
+          enlace: "",
+          observaciones: `Proveniente del pedido: ${order.nombre}`,
+          fecha: new Date().toISOString().slice(0, 10),
+          fotoUrl: "",
+          presupuestoId: "",
+        }));
+
+        registerCloned(order.id, newItems);
+        toast.success("Datos clonados al inventario correctamente.", { duration: 4000 });
+      }, 1500);
+    }
+
+    onUpdate(updated);
+  };
 
   const FileField = ({ label, value, field }: { label: string; value: string; field: keyof Order }) => (
     <div className="space-y-1.5">
@@ -87,7 +162,6 @@ const OrderDetailDialog = ({ order, open, onOpenChange, onUpdate }: OrderDetailD
         <OrderProgressBar currentStatus={order.estado} />
 
         <div className="grid grid-cols-2 gap-4 mt-4">
-          {/* Empresa */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Empresa</label>
             {canEdit ? (
@@ -97,7 +171,6 @@ const OrderDetailDialog = ({ order, open, onOpenChange, onUpdate }: OrderDetailD
             )}
           </div>
 
-          {/* Tipo de compra */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Tipo de compra</label>
             {canEdit ? (
@@ -114,7 +187,6 @@ const OrderDetailDialog = ({ order, open, onOpenChange, onUpdate }: OrderDetailD
             )}
           </div>
 
-          {/* Precio total */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Precio total</label>
             {canEdit ? (
@@ -130,7 +202,6 @@ const OrderDetailDialog = ({ order, open, onOpenChange, onUpdate }: OrderDetailD
             )}
           </div>
 
-          {/* Estado */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Estado del pedido</label>
             {canEdit ? (
@@ -147,7 +218,6 @@ const OrderDetailDialog = ({ order, open, onOpenChange, onUpdate }: OrderDetailD
             )}
           </div>
 
-          {/* Fecha */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Fecha</label>
             {canEdit ? (
@@ -159,7 +229,6 @@ const OrderDetailDialog = ({ order, open, onOpenChange, onUpdate }: OrderDetailD
             )}
           </div>
 
-          {/* Envío */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Envío</label>
             {canEdit ? (
@@ -176,15 +245,12 @@ const OrderDetailDialog = ({ order, open, onOpenChange, onUpdate }: OrderDetailD
             )}
           </div>
 
-          {/* Eventos */}
           <div className="col-span-2 space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Eventos económicos</label>
             <div className="flex flex-wrap gap-1.5">
               {order.eventos.length > 0 ? (
                 order.eventos.map((ev) => (
-                  <Badge key={ev} variant="outline" className="text-xs">
-                    {ev}
-                  </Badge>
+                  <Badge key={ev} variant="outline" className="text-xs">{ev}</Badge>
                 ))
               ) : (
                 <span className="text-xs text-muted-foreground">Sin eventos asociados</span>
@@ -214,6 +280,9 @@ const OrderDetailDialog = ({ order, open, onOpenChange, onUpdate }: OrderDetailD
 
         {/* OCR Scanner */}
         {canEdit && <OcrScanner order={order} onUpdate={(patch) => update(patch)} />}
+
+        {/* Cloned inventory items */}
+        <ClonedInventoryItems items={clonedItems} />
 
         {/* Observaciones */}
         <div className="space-y-3 mt-2">

@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { BudgetProvider } from "@/contexts/BudgetContext";
+import { InventoryProvider } from "@/contexts/InventoryContext";
 import Index from "./pages/Index.tsx";
 import Presupuestos from "./pages/Presupuestos.tsx";
 import EventosEconomicos from "./pages/EventosEconomicos.tsx";
