@@ -10,6 +10,7 @@ import Presupuestos from "./pages/Presupuestos.tsx";
 import EventosEconomicos from "./pages/EventosEconomicos.tsx";
 import Pedidos from "./pages/Pedidos.tsx";
 import Inventario from "./pages/Inventario.tsx";
+import Empresas from "./pages/Empresas.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
