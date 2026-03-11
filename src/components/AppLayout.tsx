@@ -22,7 +22,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <Header />
       <NavBar />
       <main
-        className={`flex-1 p-8 transition-opacity duration-300 ${fading ? "opacity-0" : "opacity-100"}`}
+        className={`flex-1 p-4 sm:p-8 transition-opacity duration-300 overflow-x-hidden ${fading ? "opacity-0" : "opacity-100"}`}
       >
         {children}
       </main>

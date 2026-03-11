@@ -9,7 +9,7 @@ import { useRole } from "@/contexts/RoleContext";
 const mainLinks = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/" },
   { label: "Presupuestos", icon: Wallet, to: "/presupuestos" },
-  { label: "Eventos Económicos", icon: CalendarDays, to: "/eventos-economicos" },
+  { label: "Eventos Eco.", icon: CalendarDays, to: "/eventos-economicos" },
   { label: "Pedidos", icon: ShoppingCart, to: "/pedidos-orders" },
   { label: "Inventario", icon: Package, to: "/inventario" },
 ];
@@ -27,29 +27,29 @@ const NavBar = () => {
 
   return (
     <nav className="relative" style={{ backgroundColor: "hsl(168, 45%, 42%)" }}>
-      <div className="flex items-center gap-1 px-8 py-3">
+      <div className="flex items-center gap-1 px-4 sm:px-8 py-2 sm:py-3 overflow-x-auto scrollbar-hide">
         {mainLinks.map(({ label, icon: Icon, to }) => (
           <Link
             key={label}
             to={to}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-primary-foreground transition-opacity ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium text-primary-foreground transition-opacity whitespace-nowrap shrink-0 ${
               pathname === to ? "opacity-100 bg-primary-foreground/10" : "opacity-70 hover:opacity-100"
             }`}
           >
             <Icon className="h-4 w-4" strokeWidth={1.5} />
-            {label}
+            <span className="hidden sm:inline">{label}</span>
           </Link>
         ))}
 
-        <div className="relative">
+        <div className="relative shrink-0">
           <button
             onClick={() => setDirOpen(!dirOpen)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-primary-foreground transition-opacity ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium text-primary-foreground transition-opacity whitespace-nowrap ${
               dirOpen ? "opacity-100 bg-primary-foreground/10" : "opacity-70 hover:opacity-100"
             }`}
           >
             <Users className="h-4 w-4" strokeWidth={1.5} />
-            Directorios
+            <span className="hidden sm:inline">Directorios</span>
             <ChevronDown className={`h-3 w-3 transition-transform ${dirOpen ? "rotate-180" : ""}`} strokeWidth={1.5} />
           </button>
 
@@ -73,12 +73,12 @@ const NavBar = () => {
         {isAdmin && (
           <Link
             to="/admin"
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-primary-foreground transition-opacity ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium text-primary-foreground transition-opacity whitespace-nowrap shrink-0 ${
               pathname === "/admin" ? "opacity-100 bg-primary-foreground/10" : "opacity-70 hover:opacity-100"
             }`}
           >
             <Settings className="h-4 w-4" strokeWidth={1.5} />
-            Administración
+            <span className="hidden sm:inline">Administración</span>
           </Link>
         )}
       </div>

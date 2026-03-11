@@ -77,15 +77,14 @@ const Inventario = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">Inventario</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Inventario</h1>
             <p className="text-sm text-muted-foreground">{filtered.length} elemento{filtered.length !== 1 ? "s" : ""}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <ExcelToolbar onExport={handleExport} onImport={handleImport} disabled={!canEdit} />
-            {/* View toggle */}
             <div className="flex items-center rounded-md border bg-muted/30 p-0.5">
               <button
                 onClick={() => setView("table")}
@@ -107,7 +106,7 @@ const Inventario = () => {
               </button>
             </div>
             {canEdit && (
-              <Button onClick={handleAdd} className="gap-2"><Plus className="h-4 w-4" />Nuevo elemento</Button>
+              <Button onClick={handleAdd} size="sm" className="gap-2"><Plus className="h-4 w-4" />Nuevo elemento</Button>
             )}
           </div>
         </div>
@@ -115,7 +114,11 @@ const Inventario = () => {
         {view === "table" ? (
           <>
             <InventoryFilters search={search} onSearchChange={setSearch} statusFilter={statusFilter} onStatusChange={setStatusFilter} sectionFilter={sectionFilter} onSectionChange={setSectionFilter} />
-            <InventoryTable items={filtered} onUpdate={handleUpdate} highlightId={highlightId} />
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="min-w-[700px] px-4 sm:px-0">
+                <InventoryTable items={filtered} onUpdate={handleUpdate} highlightId={highlightId} />
+              </div>
+            </div>
           </>
         ) : (
           <InventoryMap items={filtered} onUpdate={handleUpdate} />

@@ -80,15 +80,14 @@ const Pedidos = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">Pedidos</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Pedidos</h1>
             <p className="text-sm text-muted-foreground">{filtered.length} pedido{filtered.length !== 1 ? "s" : ""}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <ExcelToolbar onExport={handleExport} onImport={handleImport} disabled={!canEdit} />
-            {/* View toggle */}
             <div className="flex items-center rounded-md border bg-muted/30 p-0.5">
               <button
                 onClick={() => setView("table")}
@@ -110,7 +109,7 @@ const Pedidos = () => {
               </button>
             </div>
             {canEdit && (
-              <Button onClick={handleAdd} className="gap-2"><Plus className="h-4 w-4" />Nuevo pedido</Button>
+              <Button onClick={handleAdd} size="sm" className="gap-2"><Plus className="h-4 w-4" />Nuevo pedido</Button>
             )}
           </div>
         </div>
@@ -118,7 +117,11 @@ const Pedidos = () => {
         {view === "table" ? (
           <>
             <OrderFilters search={search} onSearchChange={setSearch} statusFilter={statusFilter} onStatusChange={setStatusFilter} typeFilter={typeFilter} onTypeChange={setTypeFilter} />
-            <OrderTable orders={filtered} onSelect={setSelectedOrder} />
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="min-w-[700px] px-4 sm:px-0">
+                <OrderTable orders={filtered} onSelect={setSelectedOrder} />
+              </div>
+            </div>
           </>
         ) : (
           <OrderTimeline orders={filtered} />
