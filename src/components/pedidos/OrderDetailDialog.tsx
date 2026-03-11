@@ -212,6 +212,9 @@ const OrderDetailDialog = ({ order, open, onOpenChange, onUpdate }: OrderDetailD
           <FileField label="Factura" value={order.facturaUrl} field="facturaUrl" />
         </div>
 
+        {/* OCR Scanner */}
+        {canEdit && <OcrScanner order={order} onUpdate={(patch) => update(patch)} />}
+
         {/* Observaciones */}
         <div className="space-y-3 mt-2">
           <div className="space-y-1">
