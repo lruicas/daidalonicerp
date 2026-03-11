@@ -1,4 +1,4 @@
-import { User, ShieldCheck, Eye, ChevronDown } from "lucide-react";
+import { User, ShieldCheck, Eye, ChevronDown, LogIn } from "lucide-react";
 import { useRole, ALL_ROLES, type Role } from "@/contexts/RoleContext";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -31,6 +31,14 @@ const Header = () => {
             <><Eye className="h-3 w-3 mr-1" /> Solo lectura</>
           )}
         </Badge>
+
+        <a
+          href="/login"
+          className="flex items-center gap-1.5 rounded-full bg-card/20 backdrop-blur-sm border border-primary-foreground/30 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-primary-foreground transition-all duration-200 hover:bg-card/30 active:scale-95"
+        >
+          <LogIn className="h-4 w-4" strokeWidth={1.5} />
+          <span className="hidden sm:inline">Login</span>
+        </a>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

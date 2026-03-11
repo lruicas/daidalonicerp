@@ -43,7 +43,11 @@ const Presupuestos = () => {
           filterPriority={filterPriority}
           onPriorityChange={setFilterPriority}
         />
-        <BudgetTable rows={filtered} onUpdateRow={canEditPresupuestos ? updateRow : undefined} />
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="min-w-[700px] px-4 sm:px-0">
+            <BudgetTable rows={filtered} onUpdateRow={canEditPresupuestos ? updateRow : undefined} />
+          </div>
+        </div>
       </div>
     </AppLayout>
   );
