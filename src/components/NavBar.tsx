@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Wallet, CalendarDays, ShoppingCart, Package,
-  Users, ChevronDown, Building2, Handshake, UserCheck,
+  Users, ChevronDown, Building2, Handshake, UserCheck, Settings,
 } from "lucide-react";
+import { useRole } from "@/contexts/RoleContext";
 
 const mainLinks = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/" },
