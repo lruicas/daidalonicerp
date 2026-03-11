@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import type { InventoryItem } from "@/lib/inventory-data";
 import { mockInventory } from "@/lib/inventory-data";
-import type { MapZone, MapLabel, MapConfig } from "@/lib/zone-data";
+import type { MapZone, MapLabel, MapConfig, MovementRecord } from "@/lib/zone-data";
 import { defaultZones, defaultLabels } from "@/lib/zone-data";
 
 interface InventoryContextType {
@@ -20,16 +20,17 @@ interface InventoryContextType {
   removeZone: (id: string) => void;
   addLabel: (label: MapLabel) => void;
   removeLabel: (id: string) => void;
+  // Movement history
+  movementHistory: MovementRecord[];
+  addMovement: (record: Omit<MovementRecord, "id">) => void;
+  getItemHistory: (itemId: string) => MovementRecord[];
 }
 
 const InventoryContext = createContext<InventoryContextType | null>(null);
 
-// Generate default positions for items within zones
 function generateDefaultPositions(items: InventoryItem[], zones: MapZone[]): Record<string, { x: number; y: number }> {
-  const sinUbicar = zones.find(z => z.id === "z-sin");
   const positions: Record<string, { x: number; y: number }> = {};
   
-  // Map items to zones by matching ubicacion text
   const zoneKeywords: Record<string, string[]> = {
     "z1-a": ["balda superior", "estantería a"],
     "z1-b": ["balda central", "armario 3"],
@@ -54,11 +55,9 @@ function generateDefaultPositions(items: InventoryItem[], zones: MapZone[]): Rec
       }
     }
 
-    if (!targetZone && sinUbicar) targetZone = sinUbicar;
     if (!targetZone) targetZone = zones[0];
 
     if (targetZone) {
-      // Spread items within zone
       const padding = 20;
       const cols = Math.max(1, Math.floor((targetZone.width - padding * 2) / 36));
       const row = Math.floor(idx % 6 / cols);
@@ -73,6 +72,15 @@ function generateDefaultPositions(items: InventoryItem[], zones: MapZone[]): Rec
   return positions;
 }
 
+// Seed some example movement history
+const seedHistory: MovementRecord[] = [
+  { id: "mv-1", itemId: "INV-001", fromZone: "Almacén B", toZone: "Sala Diseño, mesa principal", date: "2026-03-01", movedBy: "Ana Martínez" },
+  { id: "mv-2", itemId: "INV-002", fromZone: "Estantería de electrónica", toZone: "Armario 3, cajón 2", date: "2026-02-20", movedBy: "Pedro López" },
+  { id: "mv-3", itemId: "INV-004", fromZone: "Mesa de trabajo", toZone: "Rack servidor, planta 2", date: "2026-01-10", movedBy: "Miguel Torres" },
+  { id: "mv-4", itemId: "INV-005", fromZone: "Sala de reuniones B", toZone: "Sala de reuniones A", date: "2025-08-15", movedBy: "Carlos García" },
+  { id: "mv-5", itemId: "INV-003", fromZone: "Armario principal", toZone: "Almacén B, estantería 1", date: "2026-05-10", movedBy: "Laura Sánchez" },
+];
+
 export const InventoryProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<InventoryItem[]>(mockInventory);
   const [clonedByOrder, setClonedByOrder] = useState<Record<string, InventoryItem[]>>({});
@@ -81,27 +89,23 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
   const [itemPositions, setItemPositions] = useState<Record<string, { x: number; y: number }>>(() =>
     generateDefaultPositions(mockInventory, defaultZones)
   );
+  const [movementHistory, setMovementHistory] = useState<MovementRecord[]>(seedHistory);
 
   const addItems = (newItems: InventoryItem[]) => {
     setItems((prev) => [...newItems, ...prev]);
-    // Place new items in "Sin ubicar" zone
-    const sinUbicar = zones.find(z => z.id === "z-sin");
-    if (sinUbicar) {
-      const newPos: Record<string, { x: number; y: number }> = {};
-      newItems.forEach((item, i) => {
-        newPos[item.id] = {
-          x: sinUbicar.x + 20 + (i % 3) * 36,
-          y: sinUbicar.y + 30 + Math.floor(i / 3) * 36,
-        };
-      });
-      setItemPositions(prev => ({ ...prev, ...newPos }));
-    }
   };
 
   const registerCloned = (orderId: string, cloned: InventoryItem[]) => {
     setClonedByOrder((prev) => ({ ...prev, [orderId]: cloned }));
     addItems(cloned);
   };
+
+  const addMovement = (record: Omit<MovementRecord, "id">) => {
+    const newRecord: MovementRecord = { ...record, id: `mv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` };
+    setMovementHistory(prev => [newRecord, ...prev]);
+  };
+
+  const getItemHistory = (itemId: string) => movementHistory.filter(m => m.itemId === itemId);
 
   const addZone = (zone: MapZone) => setZones(prev => [...prev, zone]);
   const updateZone = (zone: MapZone) => setZones(prev => prev.map(z => z.id === zone.id ? zone : z));
@@ -116,6 +120,7 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
       items, setItems, addItems, clonedByOrder, registerCloned,
       mapConfig, setZones, setLabels, setItemPositions,
       addZone, updateZone, removeZone, addLabel, removeLabel,
+      movementHistory, addMovement, getItemHistory,
     }}>
       {children}
     </InventoryContext.Provider>
