@@ -13,6 +13,7 @@ import Inventario from "./pages/Inventario.tsx";
 import Empresas from "./pages/Empresas.tsx";
 import Patrocinadores from "./pages/Patrocinadores.tsx";
 import Miembros from "./pages/Miembros.tsx";
+import Admin from "./pages/Admin.tsx";
 import Login from "./pages/Login.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/empresas" element={<Empresas />} />
             <Route path="/patrocinadores" element={<Patrocinadores />} />
             <Route path="/miembros" element={<Miembros />} />
+            <Route path="/admin" element={<Admin />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

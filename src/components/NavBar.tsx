@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Wallet, CalendarDays, ShoppingCart, Package,
-  Users, ChevronDown, Building2, Handshake, UserCheck,
+  Users, ChevronDown, Building2, Handshake, UserCheck, Settings,
 } from "lucide-react";
+import { useRole } from "@/contexts/RoleContext";
 
 const mainLinks = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/" },
@@ -22,6 +23,7 @@ const directoryLinks = [
 const NavBar = () => {
   const [dirOpen, setDirOpen] = useState(false);
   const { pathname } = useLocation();
+  const { role } = useRole();
 
   return (
     <nav className="relative" style={{ backgroundColor: "hsl(168, 45%, 42%)" }}>
@@ -67,6 +69,18 @@ const NavBar = () => {
             </div>
           )}
         </div>
+
+        {role === "Presidente" && (
+          <Link
+            to="/admin"
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-primary-foreground transition-opacity ${
+              pathname === "/admin" ? "opacity-100 bg-primary-foreground/10" : "opacity-70 hover:opacity-100"
+            }`}
+          >
+            <Settings className="h-4 w-4" strokeWidth={1.5} />
+            Administración
+          </Link>
+        )}
       </div>
     </nav>
   );
