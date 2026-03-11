@@ -23,7 +23,7 @@ const directoryLinks = [
 const NavBar = () => {
   const [dirOpen, setDirOpen] = useState(false);
   const { pathname } = useLocation();
-  const { role } = useRole();
+  const { isAdmin } = useRole();
 
   return (
     <nav className="relative" style={{ backgroundColor: "hsl(168, 45%, 42%)" }}>
