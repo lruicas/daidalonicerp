@@ -30,6 +30,15 @@ export interface MapLabel {
   y: number;
 }
 
+export interface MovementRecord {
+  id: string;
+  itemId: string;
+  fromZone: string;
+  toZone: string;
+  date: string;
+  movedBy: string;
+}
+
 export interface MapConfig {
   zones: MapZone[];
   labels: MapLabel[];
