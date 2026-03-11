@@ -1,9 +1,10 @@
 import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
-import { CalendarDays, Plus } from "lucide-react";
+import { CalendarDays, Plus, List, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EventFilters from "@/components/eventos/EventFilters";
 import EventTable from "@/components/eventos/EventTable";
+import EventCalendarView from "@/components/eventos/EventCalendarView";
 import ExcelToolbar from "@/components/ExcelToolbar";
 import { mockEvents, EconomicEvent, EventStatus, SPONSORS, EVENT_STATUSES } from "@/lib/events-data";
 import { useRole } from "@/contexts/RoleContext";
